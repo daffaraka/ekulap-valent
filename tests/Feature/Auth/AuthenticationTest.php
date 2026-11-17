@@ -78,11 +78,14 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post(route('login.store'), [
+        $response = $this->post(route('login.store'), [
             'email' => $user->username,
             'password' => 'wrong-password',
         ]);
 
+        $response->assertSessionHasErrors([
+            'email' => 'NIK atau kata sandi yang Anda masukkan tidak sesuai.',
+        ]);
         $this->assertGuest();
     }
 

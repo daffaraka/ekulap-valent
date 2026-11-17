@@ -1,7 +1,7 @@
-import { Head, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
-import InputError from '@/components/input-error';
-import { AuthLoginBrandPanel } from '@/pages/auth/components/AuthLoginBrandPanel';
+import { Head, useForm, usePage } from "@inertiajs/react";
+import type { FormEvent } from "react";
+import InputError from "@/components/input-error";
+import { AuthLoginBrandPanel } from "@/pages/auth/components/AuthLoginBrandPanel";
 
 type DemoAccount = {
     label: string;
@@ -18,22 +18,41 @@ export default function AuthLogin({
     status,
     demoAccounts = [],
 }: AuthLoginProps) {
-    const { data, setData, post, processing, errors } = useForm({
-        email: '',
-        password: '',
+    const pageErrors = usePage<{ errors?: Record<string, string> }>().props
+        .errors;
+
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
+        email: "",
+        password: "",
         remember: true,
     });
 
+    const mergedErrors: Record<string, string | undefined> = {
+        ...pageErrors,
+        ...errors,
+    };
+
+    const topErrorMessage =
+        mergedErrors.email ??
+        mergedErrors.password ??
+        Object.values(mergedErrors).find(Boolean);
+
     const handleSubmit = (event: FormEvent): void => {
         event.preventDefault();
-        post('/login');
+        clearErrors();
+        post("/login", {
+            onError: () => {
+                setData("password", "");
+            },
+        });
     };
 
     const fillDemoAccount = (nik: string): void => {
+        clearErrors();
         setData({
             ...data,
             email: nik,
-            password: 'password',
+            password: "password",
         });
     };
 
@@ -58,6 +77,15 @@ export default function AuthLogin({
                             {status}
                         </div>
                     )}
+                    {/* 
+                    {topErrorMessage && (
+                        <div
+                            role="alert"
+                            className="mt-4 rounded-md border border-[#9E2A2B]/30 bg-[#9E2A2B]/8 px-3.5 py-2.5 text-xs font-semibold text-[#8C2323]"
+                        >
+                            {topErrorMessage}
+                        </div>
+                    )} */}
 
                     <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                         <div>
@@ -72,16 +100,21 @@ export default function AuthLogin({
                                 type="text"
                                 name="email"
                                 value={data.email}
-                                onChange={(e) =>
-                                    setData('email', e.target.value)
-                                }
+                                onChange={(e) => {
+                                    clearErrors("email");
+                                    setData("email", e.target.value);
+                                }}
                                 required
                                 autoFocus
                                 placeholder="Contoh: 10010001"
-                                className="min-h-11 w-full rounded-md border border-[#C8D4C8] bg-[#E9EEE9]/45 px-3.5 text-sm text-[#102B26] focus:border-[#1C5143] focus:bg-white focus:outline-none"
+                                className={`min-h-11 w-full rounded-md border bg-[#E9EEE9]/45 px-3.5 text-sm text-[#102B26] focus:bg-white focus:outline-none ${
+                                    mergedErrors.email
+                                        ? "border-[#9E2A2B] focus:border-[#9E2A2B]"
+                                        : "border-[#C8D4C8] focus:border-[#1C5143]"
+                                }`}
                             />
                             <InputError
-                                message={errors.email}
+                                message={mergedErrors.email}
                                 className="mt-1"
                             />
                         </div>
@@ -98,15 +131,20 @@ export default function AuthLogin({
                                 type="password"
                                 name="password"
                                 value={data.password}
-                                onChange={(e) =>
-                                    setData('password', e.target.value)
-                                }
+                                onChange={(e) => {
+                                    clearErrors("password");
+                                    setData("password", e.target.value);
+                                }}
                                 required
                                 placeholder="Masukkan kata sandi"
-                                className="min-h-11 w-full rounded-md border border-[#C8D4C8] bg-[#E9EEE9]/45 px-3.5 text-sm text-[#102B26] focus:border-[#1C5143] focus:bg-white focus:outline-none"
+                                className={`min-h-11 w-full rounded-md border bg-[#E9EEE9]/45 px-3.5 text-sm text-[#102B26] focus:bg-white focus:outline-none ${
+                                    mergedErrors.password
+                                        ? "border-[#9E2A2B] focus:border-[#9E2A2B]"
+                                        : "border-[#C8D4C8] focus:border-[#1C5143]"
+                                }`}
                             />
                             <InputError
-                                message={errors.password}
+                                message={mergedErrors.password}
                                 className="mt-1"
                             />
                         </div>
@@ -116,7 +154,7 @@ export default function AuthLogin({
                                 type="checkbox"
                                 checked={data.remember}
                                 onChange={(e) =>
-                                    setData('remember', e.target.checked)
+                                    setData("remember", e.target.checked)
                                 }
                                 className="size-4 rounded border-[#C8D4C8] accent-[#1C5143]"
                             />
@@ -128,14 +166,14 @@ export default function AuthLogin({
                             disabled={processing}
                             className="min-h-11 w-full rounded-md bg-[#1C5143] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#102B26] disabled:opacity-60"
                         >
-                            {processing ? 'Memverifikasi...' : 'Masuk Aplikasi'}
+                            {processing ? "Memverifikasi..." : "Masuk Aplikasi"}
                         </button>
                     </form>
 
                     {demoAccounts.length > 0 && (
                         <div className="mt-6 border-t border-[#CFD9CF] pt-4">
                             <div className="mb-2 text-xs font-semibold text-[#466059]">
-                                Isi Cepat Akun Demo NIK (Kata Sandi:{' '}
+                                Isi Cepat Akun Demo NIK (Kata Sandi:{" "}
                                 <code className="rounded bg-[#E9EEE9] px-1.5 py-0.5 text-[#102B26]">
                                     password
                                 </code>
