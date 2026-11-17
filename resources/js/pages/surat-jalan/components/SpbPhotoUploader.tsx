@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 
 type SpbPhotoUploaderProps = {
@@ -15,6 +15,7 @@ export function SpbPhotoUploader({
     onChange,
 }: SpbPhotoUploaderProps) {
     const [previews, setPreviews] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         const urls = photos.map((file) => URL.createObjectURL(file));
@@ -38,7 +39,7 @@ export function SpbPhotoUploader({
 
     return (
         <div>
-            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <label className="text-xs font-semibold text-[#102B26]">
                     Foto Pengangkutan SPB (1 atau 2 Foto
                     {required ? ' — Wajib' : ' — Opsional saat Belum Muat'})
@@ -49,6 +50,7 @@ export function SpbPhotoUploader({
             </div>
 
             <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 multiple
@@ -57,15 +59,26 @@ export function SpbPhotoUploader({
                     handleFilesSelected(e.target.files);
                     e.target.value = '';
                 }}
-                className="w-full rounded-md border border-[#C8D4C8] bg-[#E9EEE9]/35 p-2 text-xs disabled:opacity-60"
+                className="hidden"
             />
 
-            {previews.length > 0 && (
-                <div className="mt-2.5 grid grid-cols-2 gap-3">
+            {previews.length === 0 ? (
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex min-h-20 w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-[#1C5143]/35 bg-[#E9EEE9]/40 px-4 py-3 text-xs font-semibold text-[#1C5143] transition hover:border-[#1C5143] hover:bg-[#E9EEE9]/70"
+                >
+                    <span className="flex size-8 items-center justify-center rounded-full bg-[#1C5143] text-lg font-bold text-white">
+                        +
+                    </span>
+                    <span>Pilih Foto Pengangkutan SPB</span>
+                </button>
+            ) : (
+                <div className="flex flex-wrap items-center gap-3">
                     {previews.map((src, index) => (
                         <div
                             key={`${src}-${index}`}
-                            className="relative overflow-hidden rounded-md border border-[#C8D4C8] bg-[#F6F8F6]"
+                            className="relative w-32 overflow-hidden rounded-md border border-[#C8D4C8] bg-[#F6F8F6] shadow-xs"
                         >
                             <img
                                 src={src}
@@ -80,8 +93,23 @@ export function SpbPhotoUploader({
                             >
                                 ✕
                             </button>
+                            <div className="bg-white/95 px-1.5 py-0.5 text-center text-[10px] font-medium text-[#466059]">
+                                Foto {index + 1}
+                            </div>
                         </div>
                     ))}
+
+                    {photos.length < 2 && (
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            title="Tambah foto SPB"
+                            aria-label="Tambah foto SPB"
+                            className="flex size-12 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-[#1C5143]/45 bg-[#E9EEE9]/55 text-2xl font-bold text-[#1C5143] transition hover:border-[#1C5143] hover:bg-[#1C5143]/12"
+                        >
+                            +
+                        </button>
+                    )}
                 </div>
             )}
 

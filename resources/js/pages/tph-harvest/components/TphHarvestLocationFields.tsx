@@ -1,3 +1,4 @@
+import { DatePickerInput } from '@/components/ekulap/DatePickerInput';
 import InputError from '@/components/input-error';
 import { TphHarvestGpsFields } from '@/pages/tph-harvest/components/TphHarvestGpsFields';
 import type { Block, TphPoint, WeigherOption } from '@/types';
@@ -50,14 +51,10 @@ export function TphHarvestLocationFields({
                     <label className="mb-1 block text-xs font-semibold">
                         Tanggal Kerja
                     </label>
-                    <input
-                        type="date"
+                    <DatePickerInput
                         value={workDate}
-                        onChange={(e) =>
-                            onChangeField('work_date', e.target.value)
-                        }
+                        onChange={(iso) => onChangeField('work_date', iso)}
                         required
-                        className="min-h-11 w-full rounded-md border border-[#C8D4C8] px-3 text-xs"
                     />
                     <InputError message={errors.work_date} />
                 </div>

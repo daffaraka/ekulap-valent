@@ -13,7 +13,7 @@ export function BrandLogo({
                 <div className="flex size-10 items-center justify-center rounded-md bg-white p-1.5">
                     <img
                         src="/images/sinarmas-mark.png"
-                        alt="Logo Sinarmas"
+                        alt="Logo e-KULAP"
                         className="size-full object-contain"
                     />
                 </div>
@@ -23,8 +23,8 @@ export function BrandLogo({
 
     const wrapperClass =
         variant === 'sidebar'
-            ? 'rounded-md bg-white px-3 py-2'
-            : 'rounded-md border border-[#102B26]/12 bg-white px-3.5 py-2';
+            ? 'rounded-md border border-white/15 bg-black px-2 py-1.5'
+            : 'rounded-md border border-[#102B26]/14 bg-black px-2.5 py-1.5';
 
     const subtitleClass =
         variant === 'sidebar'
@@ -33,11 +33,13 @@ export function BrandLogo({
 
     return (
         <div className="flex flex-col gap-1.5">
-            <div className={`inline-flex items-center gap-2.5 ${wrapperClass}`}>
+            <div
+                className={`inline-flex items-center justify-center overflow-hidden ${wrapperClass}`}
+            >
                 <img
-                    src="/images/sinarmas-logo.png"
-                    alt="Sinarmas"
-                    className="h-6 w-auto object-contain"
+                    src="/images/ekulap-logo.jpg"
+                    alt="e-KULAP — Kutip Lapis Monitoring System"
+                    className="h-14 w-auto object-contain"
                 />
             </div>
             <div className="px-0.5">

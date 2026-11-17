@@ -1,24 +1,16 @@
-import { IconCoconutPalm } from '@/components/ekulap/DuotoneIcons';
-
 export function AuthLoginBrandPanel() {
     return (
         <div className="flex flex-col justify-between bg-[#102B26] p-7 text-[#E9EEE9] lg:col-span-5">
             <div>
-                <div className="inline-flex items-center gap-3.5">
-                    <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-[#D6A84F]/40 bg-[#1C5143] text-[#D6A84F] shadow-sm">
-                        <IconCoconutPalm className="size-9" />
-                    </div>
-                    <div>
-                        <div className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                            eKULAP
-                        </div>
-                        <div className="mt-0.5 text-[11px] font-semibold tracking-wider text-[#D6A84F] uppercase">
-                            Sinarmas Agribusiness
-                        </div>
-                    </div>
+                <div className="overflow-hidden rounded-lg border border-[#D6A84F]/35 bg-black p-2 shadow-md">
+                    <img
+                        src="/images/ekulap-logo.jpg"
+                        alt="e-KULAP — Kutip Lapis Monitoring System"
+                        className="w-full object-contain"
+                    />
                 </div>
 
-                <h2 className="mt-6 text-xl leading-snug font-bold text-white">
+                <h2 className="mt-5 text-xl leading-snug font-bold text-white">
                     Elektronik Kutip Lapis — Monitoring Panen TPH–PKS
                 </h2>
                 <p className="mt-2 text-xs leading-relaxed text-[#E9EEE9]/80">
