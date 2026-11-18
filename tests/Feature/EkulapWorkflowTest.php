@@ -406,4 +406,182 @@ class EkulapWorkflowTest extends TestCase
             ->get('/')
             ->assertOk();
     }
+
+    public function test_cross_block_tph_selection_and_backend_image_compression(): void
+    {
+        Storage::fake('public');
+
+        $kerani = User::query()->where('username', '10010003')->firstOrFail();
+        $blockA14 = Block::query()->where('code', 'A14')->firstOrFail();
+        $tphA12 = TphPoint::query()->where('code', 'TPH-A12-01')->firstOrFail();
+        $worker = Worker::query()->firstOrFail();
+
+        // Buat gambar besar 2400x1800 untuk menguji kompresi otomatis di backend
+        $this->actingAs($kerani)->post(route('tph-harvest.store'), [
+            'work_date' => now()->toDateString(),
+            'block_id' => $blockA14->id,
+            'tph_point_id' => $tphA12->id,
+            'worker_ids' => [$worker->id],
+            'weigher_user_id' => $kerani->id,
+            'harvest_type' => 'Kutip Lapis',
+            'sack_count' => 8,
+            'tph_count' => 1,
+            'gross_weight_kg' => 240,
+            'input_latitude' => $tphA12->latitude,
+            'input_longitude' => $tphA12->longitude,
+            'photos' => [
+                UploadedFile::fake()->image('large1.png', 2400, 1800),
+                UploadedFile::fake()->image('large2.jpg', 2000, 1500),
+                UploadedFile::fake()->image('large3.png', 1800, 1200),
+            ],
+        ])->assertRedirect(route('tph-harvest.index'));
+
+        /** @var TphHarvestRecord $saved */
+        $saved = TphHarvestRecord::query()->latest('id')->firstOrFail();
+        $this->assertSame($blockA14->id, $saved->block_id);
+        $this->assertSame($tphA12->id, $saved->tph_point_id);
+        $this->assertSame($blockA14->division_id, $saved->division_id);
+        $this->assertCount(3, $saved->photo_paths ?? []);
+
+        foreach ($saved->photo_paths ?? [] as $photoPath) {
+            Storage::disk('public')->assertExists($photoPath);
+            $this->assertStringEndsWith('.jpg', $photoPath);
+        }
+    }
+
+    public function test_pks_restan_ratio_and_rekapan_kutip_lapis_page_and_export(): void
+    {
+        Storage::fake('public');
+
+        $kerani = User::query()->where('username', '10010003')->firstOrFail();
+        $admin = User::query()->where('username', '10010001')->firstOrFail();
+        $asisten = User::query()->where('username', '10010004')->firstOrFail();
+        $block = Block::query()->firstOrFail();
+        $tph = TphPoint::query()->firstOrFail();
+        $worker = Worker::query()->firstOrFail();
+
+        $today = now()->toDateString();
+
+        // Tambahkan catatan panen hari ini sebanyak 12 karung (belum dimuat ke SPB)
+        $this->actingAs($kerani)->post(route('tph-harvest.store'), [
+            'work_date' => $today,
+            'block_id' => $block->id,
+            'tph_point_id' => $tph->id,
+            'worker_ids' => [$worker->id],
+            'weigher_user_id' => $kerani->id,
+            'harvest_type' => 'Kutip Lapis',
+            'sack_count' => 12,
+            'tph_count' => 1,
+            'gross_weight_kg' => 360,
+            'input_latitude' => $tph->latitude,
+            'input_longitude' => $tph->longitude,
+            'photos' => [
+                UploadedFile::fake()->image('p1.jpg'),
+                UploadedFile::fake()->image('p2.jpg'),
+                UploadedFile::fake()->image('p3.jpg'),
+            ],
+        ])->assertRedirect();
+
+        $expectedPanenSdHi = (int) TphHarvestRecord::query()
+            ->whereDate('work_date', '<=', $today)
+            ->sum('sack_count');
+        $expectedUnloadedSacks = (int) TphHarvestRecord::query()
+            ->whereDate('work_date', '<=', $today)
+            ->get()
+            ->sum(fn (TphHarvestRecord $r): int => $r->remainingSacks());
+        $expectedBelumMuatSacks = (int) DeliveryOrder::query()
+            ->where('delivery_status', DeliveryStatus::BelumMuat->value)
+            ->sum('total_sacks_loaded');
+        $expectedRestanSdHi = $expectedUnloadedSacks + $expectedBelumMuatSacks;
+
+        $this->actingAs($admin)->get(route('pks-reconciliation.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('pks-reconciliation/PksReconciliationIndex')
+                ->where('summary.today_sent_sacks', $expectedRestanSdHi)
+                ->where('summary.today_total_sacks', $expectedPanenSdHi)
+            );
+
+        // Kerani tidak memiliki akses Rekapan Kutip Lapis; Asisten & Admin bisa melihat & ekspor
+        $this->actingAs($kerani)->get(route('rekapan.index'))->assertForbidden();
+
+        $this->actingAs($asisten)->get(route('rekapan.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('rekapan/RekapanIndex')
+                ->has('dailyRows')
+                ->has('totals.days_count')
+                ->where('totals.total_sacks', (int) TphHarvestRecord::query()->sum('sack_count'))
+            );
+
+        $csvResponse = $this->actingAs($admin)->get(route('rekapan.export'));
+        $csvResponse->assertOk();
+        $this->assertStringContainsString($today, $csvResponse->streamedContent());
+    }
+
+    public function test_station_restan_recap_and_restan_age_calculations_handle_future_dates_and_spb_belum_muat(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::query()->where('username', '10010001')->firstOrFail();
+        $kerani = User::query()->where('username', '10010003')->firstOrFail();
+        $block = Block::query()->firstOrFail();
+        $tph = TphPoint::query()->firstOrFail();
+        $worker = Worker::query()->firstOrFail();
+
+        // Tanggal mendatang tidak boleh menghasilkan umur restan positif
+        $this->actingAs($kerani)->post(route('tph-harvest.store'), [
+            'work_date' => now()->addDays(2)->toDateString(),
+            'block_id' => $block->id,
+            'tph_point_id' => $tph->id,
+            'worker_ids' => [$worker->id],
+            'weigher_user_id' => $kerani->id,
+            'harvest_type' => 'Kutip Lapis',
+            'sack_count' => 7,
+            'tph_count' => 1,
+            'gross_weight_kg' => 210,
+            'input_latitude' => $tph->latitude,
+            'input_longitude' => $tph->longitude,
+            'photos' => [
+                UploadedFile::fake()->image('f1.jpg'),
+                UploadedFile::fake()->image('f2.jpg'),
+                UploadedFile::fake()->image('f3.jpg'),
+            ],
+        ])->assertRedirect();
+
+        $futureLot = TphHarvestRecord::query()->latest('id')->firstOrFail();
+
+        $this->actingAs($admin)->get(route('rekapan.index', ['tab' => 'station']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('rekapan/RekapanIndex')
+                ->where('filters.tab', 'station')
+                ->has('stationRows')
+                ->has('totals.max_restan_days')
+                ->where('stationRows', function ($rows) use ($futureLot): bool {
+                    foreach ($rows as $row) {
+                        foreach ($row['records'] as $lot) {
+                            if ($lot['id'] === $futureLot->id) {
+                                return $lot['restan_days'] === 0;
+                            }
+                        }
+                    }
+
+                    return false;
+                })
+            );
+
+        $this->actingAs($admin)->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard/DashboardOverview')
+                ->has('kpis.max_restan_days')
+                ->has('kpis.pending_station_count')
+            );
+
+        $stationCsv = $this->actingAs($admin)->get(route('rekapan.export', ['tab' => 'station']));
+        $stationCsv->assertOk();
+        $this->assertStringContainsString('Stasiun TPH', $stationCsv->streamedContent());
+        $this->assertStringContainsString($tph->code, $stationCsv->streamedContent());
+    }
 }

@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import {
     IconHarvestScale,
     IconMillWeigh,
@@ -12,7 +13,10 @@ export type DashboardKpis = {
     remaining_sacks_at_tph: number;
     active_spb_count: number;
     cumulative_restan_days: number;
+    max_restan_days?: number;
     pending_restan_lots: number;
+    aged_restan_lots?: number;
+    pending_station_count?: number;
 };
 
 type KpiSummaryGridProps = {
@@ -22,7 +26,10 @@ type KpiSummaryGridProps = {
 export function KpiSummaryGrid({ kpis }: KpiSummaryGridProps) {
     return (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm">
+            <Link
+                href="/rekapan-kutip-lapis"
+                className="block rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm transition hover:border-[#1C5143]/40 hover:bg-[#F6F8F6]/60"
+            >
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-[#5A6C68]">
                         Total Panen &amp; Kutip Lapis
@@ -32,13 +39,21 @@ export function KpiSummaryGrid({ kpis }: KpiSummaryGridProps) {
                 <div className="mt-2.5 text-2xl font-semibold tracking-tight text-[#102B26]">
                     {formatKg(kpis.total_net_kg)}
                 </div>
-                <div className="mt-1 text-xs text-[#5A6C68]">
-                    {formatNumber(kpis.total_sacks)} Karung ·{' '}
-                    {formatNumber(kpis.total_lots)} Lot TPH
+                <div className="mt-1 flex items-center justify-between text-xs text-[#5A6C68]">
+                    <span>
+                        {formatNumber(kpis.total_sacks)} Karung ·{' '}
+                        {formatNumber(kpis.total_lots)} Stasiun
+                    </span>
+                    <span className="font-semibold text-[#1C5143]">
+                        Rekapan →
+                    </span>
                 </div>
-            </div>
+            </Link>
 
-            <div className="rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm">
+            <Link
+                href="/rekapan-kutip-lapis"
+                className="block rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm transition hover:border-[#1C5143]/40 hover:bg-[#F6F8F6]/60"
+            >
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-[#5A6C68]">
                         Restan / Belum Diangkut
@@ -48,13 +63,21 @@ export function KpiSummaryGrid({ kpis }: KpiSummaryGridProps) {
                         TPH
                     </span>
                 </div>
-                <div className="mt-2.5 text-2xl font-semibold tracking-tight text-[#102B26]">
-                    {formatNumber(kpis.remaining_sacks_at_tph)} Karung
+                <div className="mt-2.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                    <span className="text-2xl font-semibold tracking-tight text-[#102B26]">
+                        {formatNumber(kpis.remaining_sacks_at_tph)} Karung
+                    </span>
+                    <span className="text-xs font-medium text-[#5A6C68]">
+                        (restan) / {formatNumber(kpis.total_sacks)} Karung
+                    </span>
                 </div>
-                <div className="mt-1 text-xs text-[#5A6C68]">
-                    Menunggu muat ke Surat Jalan (SPB)
+                <div className="mt-1 flex items-center justify-between gap-2 text-xs text-[#5A6C68]">
+                    <span>Total s/d HI panen kutip lapis</span>
+                    <span className="shrink-0 font-semibold text-[#1C5143]">
+                        Per Tgl →
+                    </span>
                 </div>
-            </div>
+            </Link>
 
             <div className="rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -71,7 +94,10 @@ export function KpiSummaryGrid({ kpis }: KpiSummaryGridProps) {
                 </div>
             </div>
 
-            <div className="rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm">
+            <Link
+                href="/rekapan-kutip-lapis?tab=station"
+                className="block rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm transition hover:border-[#1C5143]/40 hover:bg-[#F6F8F6]/60"
+            >
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-[#5A6C68]">
                         Hari Restan Susut Belum Diangkut
@@ -79,16 +105,22 @@ export function KpiSummaryGrid({ kpis }: KpiSummaryGridProps) {
                     <IconMillWeigh className="size-4 text-[#D6A84F]" />
                 </div>
                 <div className="mt-2.5 text-2xl font-semibold tracking-tight text-[#102B26]">
-                    {formatNumber(kpis.cumulative_restan_days)} Hari
+                    Terlama {formatNumber(kpis.max_restan_days ?? 0)} Hari
                 </div>
-                <div className="mt-1 text-xs text-[#5A6C68]">
-                    Akumulatif dari{' '}
-                    <span className="font-medium text-[#102B26]">
-                        {formatNumber(kpis.pending_restan_lots)} Lot
-                    </span>{' '}
-                    belum terangkut
+                <div className="mt-1 flex items-center justify-between gap-2 text-xs text-[#5A6C68]">
+                    <span>
+                        Akumulasi{' '}
+                        <span className="font-medium text-[#102B26]">
+                            {formatNumber(kpis.cumulative_restan_days)} Hari
+                        </span>{' '}
+                        · {formatNumber(kpis.pending_restan_lots)} Lot (
+                        {formatNumber(kpis.pending_station_count ?? 0)} Stasiun)
+                    </span>
+                    <span className="shrink-0 font-semibold text-[#1C5143]">
+                        Per Stasiun →
+                    </span>
                 </div>
-            </div>
+            </Link>
         </div>
     );
 }
