@@ -28,9 +28,9 @@ export function TphHarvestFormModal({
 }: TphHarvestFormModalProps) {
     const today = new Date().toISOString().slice(0, 10);
     const firstBlockId = blocks[0] ? String(blocks[0].id) : '';
-    const firstBlockTph = tphPoints.find(
-        (point) => String(point.block_id) === firstBlockId,
-    );
+    const firstBlockTph =
+        tphPoints.find((point) => String(point.block_id) === firstBlockId) ??
+        tphPoints[0];
 
     const { data, setData, post, processing, errors, reset } = useForm<{
         work_date: string;
@@ -64,20 +64,20 @@ export function TphHarvestFormModal({
         return null;
     }
 
-    const filteredTphPoints = tphPoints.filter(
-        (point) => !data.block_id || String(point.block_id) === data.block_id,
-    );
-
     const handleBlockChange = (nextBlockId: string): void => {
         const matchingTph = tphPoints.find(
             (point) => String(point.block_id) === nextBlockId,
         );
+        const fallbackTph =
+            matchingTph ??
+            tphPoints.find((point) => String(point.id) === data.tph_point_id) ??
+            tphPoints[0];
         setData({
             ...data,
             block_id: nextBlockId,
-            tph_point_id: matchingTph ? String(matchingTph.id) : '',
-            input_latitude: matchingTph ? String(matchingTph.latitude) : '',
-            input_longitude: matchingTph ? String(matchingTph.longitude) : '',
+            tph_point_id: fallbackTph ? String(fallbackTph.id) : '',
+            input_latitude: fallbackTph ? String(fallbackTph.latitude) : '',
+            input_longitude: fallbackTph ? String(fallbackTph.longitude) : '',
         });
     };
 
@@ -112,7 +112,7 @@ export function TphHarvestFormModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#102B26]/65 p-4">
-            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-[#CFD9CF] bg-white p-5 shadow-xl sm:p-6">
+            <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-lg border border-[#CFD9CF] bg-white p-5 shadow-xl sm:p-6">
                 <div className="flex items-center justify-between border-b border-[#E9EEE9] pb-3">
                     <div>
                         <h2 className="text-base font-bold text-[#102B26]">
@@ -145,7 +145,7 @@ export function TphHarvestFormModal({
                         inputLatitude={data.input_latitude}
                         inputLongitude={data.input_longitude}
                         blocks={blocks}
-                        filteredTphPoints={filteredTphPoints}
+                        filteredTphPoints={tphPoints}
                         weighers={weighers}
                         harvestTypes={harvestTypes}
                         errors={errors}

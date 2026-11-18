@@ -76,15 +76,15 @@ export default function PksReconciliationIndex({
                     </div>
                     <div className="rounded-lg border border-[#102B26]/10 bg-white p-4 shadow-sm">
                         <div className="text-xs text-[#5A6C68]">
-                            Persentase Hari Ini
+                            Persentase Restan s/d HI
                         </div>
                         <div className="mt-1 text-xl font-semibold text-[#1C5143]">
                             {summary.today_sent_percentage}%
                         </div>
                         <div className="mt-0.5 text-[11px] text-[#5A6C68]">
-                            {formatNumber(summary.today_sent_sacks)} /{' '}
-                            {formatNumber(summary.today_total_sacks)} Karung
-                            hari ini
+                            {formatNumber(summary.today_sent_sacks)} Restan s/d
+                            HI / {formatNumber(summary.today_total_sacks)} Panen
+                            s/d HI
                         </div>
                     </div>
                 </div>
