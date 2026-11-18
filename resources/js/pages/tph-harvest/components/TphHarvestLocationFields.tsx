@@ -1,4 +1,5 @@
 import { DatePickerInput } from '@/components/ekulap/DatePickerInput';
+import { SearchableSelect } from '@/components/ekulap/SearchableSelect';
 import InputError from '@/components/input-error';
 import { TphHarvestGpsFields } from '@/pages/tph-harvest/components/TphHarvestGpsFields';
 import type { Block, TphPoint, WeigherOption } from '@/types';
@@ -84,22 +85,26 @@ export function TphHarvestLocationFields({
                     <label className="mb-1 block text-xs font-semibold">
                         Blok
                     </label>
-                    <select
+                    <SearchableSelect
                         value={blockId}
-                        onChange={(e) => onBlockChange(e.target.value)}
-                        className="min-h-11 w-full rounded-md border border-[#C8D4C8] px-3 text-xs"
-                    >
-                        {blocks.map((block) => (
-                            <option key={block.id} value={block.id}>
-                                Blok {block.code}
-                            </option>
-                        ))}
-                    </select>
+                        onChange={onBlockChange}
+                        placeholder="Pilih blok..."
+                        searchPlaceholder="Cari kode blok..."
+                        emptyText="Blok tidak ditemukan."
+                        options={blocks.map((block) => ({
+                            value: String(block.id),
+                            label: `Blok ${block.code}`,
+                            sublabel: block.planting_year
+                                ? `Tahun Tanam ${block.planting_year}`
+                                : undefined,
+                            searchText: `${block.code} Blok ${block.code}`,
+                        }))}
+                    />
                     <InputError message={errors.block_id} />
                 </div>
                 <div>
                     <label className="mb-1 block text-xs font-semibold">
-                        Titik TPH (Lokasi Terkunci)
+                        Titik TPH / Stasiun Brondol
                     </label>
                     <select
                         value={tphPointId}
@@ -110,7 +115,7 @@ export function TphHarvestLocationFields({
                     >
                         {filteredTphPoints.map((tph) => (
                             <option key={tph.id} value={tph.id}>
-                                {tph.code}
+                                {tph.code} — {tph.location_label}
                             </option>
                         ))}
                     </select>
@@ -120,19 +125,21 @@ export function TphHarvestLocationFields({
                     <label className="mb-1 block text-xs font-semibold">
                         Petugas Timbang
                     </label>
-                    <select
+                    <SearchableSelect
                         value={weigherUserId}
-                        onChange={(e) =>
-                            onChangeField('weigher_user_id', e.target.value)
+                        onChange={(nextId) =>
+                            onChangeField('weigher_user_id', nextId)
                         }
-                        className="min-h-11 w-full rounded-md border border-[#C8D4C8] px-3 text-xs"
-                    >
-                        {weighers.map((user) => (
-                            <option key={user.id} value={user.id}>
-                                {user.name} ({user.username ?? user.role})
-                            </option>
-                        ))}
-                    </select>
+                        placeholder="Pilih petugas timbang..."
+                        searchPlaceholder="Cari nama / NIK petugas..."
+                        emptyText="Petugas tidak ditemukan."
+                        options={weighers.map((user) => ({
+                            value: String(user.id),
+                            label: `${user.name} (${user.username ?? user.role})`,
+                            sublabel: user.role,
+                            searchText: `${user.name} ${user.username ?? ''} ${user.role}`,
+                        }))}
+                    />
                     <InputError message={errors.weigher_user_id} />
                 </div>
             </div>
