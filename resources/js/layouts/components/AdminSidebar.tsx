@@ -4,6 +4,10 @@ import {
     buildSidebarNavItems,
     type NavItem,
 } from '@/layouts/components/sidebarNavConfig';
+import {
+    getSidebarTheme,
+    type SidebarTheme,
+} from '@/layouts/components/sidebarTheme';
 
 type AdminSidebarProps = {
     currentUrl: string;
@@ -12,6 +16,7 @@ type AdminSidebarProps = {
     pendingTphLots: number;
     userRole: string;
     isAuthenticated: boolean;
+    isDevelopment?: boolean;
     onCloseMobile: () => void;
     onToggleCollapse: () => void;
 };
@@ -35,11 +40,13 @@ function SidebarNavItem({
     item,
     active,
     isCollapsed,
+    theme,
     onCloseMobile,
 }: {
     item: NavItem;
     active: boolean;
     isCollapsed: boolean;
+    theme: SidebarTheme;
     onCloseMobile: () => void;
 }) {
     return (
@@ -48,18 +55,10 @@ function SidebarNavItem({
             onClick={onCloseMobile}
             title={isCollapsed ? item.label : undefined}
             className={`ek-btn group relative flex min-h-11 items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium ${
-                active
-                    ? 'border-l-4 border-[#D6A84F] bg-white font-semibold text-[#5D420B] shadow-sm'
-                    : 'text-[#EDE4D3]/85 hover:bg-[#4A3408]/80 hover:text-white'
+                active ? theme.navActive : theme.navIdle
             } ${isCollapsed ? 'justify-center px-2' : ''}`}
         >
-            <span
-                className={
-                    active
-                        ? 'text-[#5D420B]'
-                        : 'text-[#EDE4D3]/80 group-hover:text-white'
-                }
-            >
+            <span className={active ? theme.iconActive : theme.iconIdle}>
                 {item.icon}
             </span>
             {!isCollapsed && (
@@ -68,9 +67,7 @@ function SidebarNavItem({
                     {item.badge !== undefined && (
                         <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                active
-                                    ? 'bg-[#5D420B]/12 text-[#5D420B]'
-                                    : 'border border-[#D6A84F]/55 bg-[#D6A84F]/20 text-[#F5D78E]'
+                                active ? theme.badgeActive : theme.badgeIdle
                             }`}
                         >
                             {item.badge}
@@ -89,9 +86,11 @@ export function AdminSidebar({
     pendingTphLots,
     userRole,
     isAuthenticated,
+    isDevelopment = false,
     onCloseMobile,
     onToggleCollapse,
 }: AdminSidebarProps) {
+    const theme = getSidebarTheme(isDevelopment);
     const navItems = buildSidebarNavItems(userRole, pendingTphLots);
     const homeHref =
         userRole === 'Kerani Produksi' ? '/tph-harvest' : '/dashboard';
@@ -101,26 +100,28 @@ export function AdminSidebar({
         <>
             {mobileOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-[#2B1E04]/65 backdrop-blur-xs lg:hidden"
+                    className={`fixed inset-0 z-40 backdrop-blur-xs lg:hidden ${theme.backdrop}`}
                     onClick={onCloseMobile}
                 />
             )}
 
             <aside
-                className={`no-print fixed inset-y-0 left-0 z-50 flex flex-col bg-[#5D420B] text-[#FAF6EE] transition-all duration-200 lg:sticky lg:top-0 lg:bottom-auto lg:left-auto lg:h-screen lg:shrink-0 lg:translate-x-0 lg:self-start ${
+                className={`no-print fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-200 lg:sticky lg:top-0 lg:bottom-auto lg:left-auto lg:h-screen lg:shrink-0 lg:translate-x-0 lg:self-start ${theme.aside} ${
                     mobileOpen
                         ? 'w-72 translate-x-0'
                         : '-translate-x-full lg:translate-x-0'
                 } ${collapsed ? 'lg:w-20' : 'lg:w-68'}`}
             >
-                <div className="flex shrink-0 items-center justify-between border-b border-white/14 px-4 py-4">
+                <div
+                    className={`flex shrink-0 items-center justify-between border-b px-4 py-4 ${theme.headerBorder}`}
+                >
                     <Link href={homeHref} className="block w-full">
                         <BrandLogo collapsed={isCollapsed} variant="sidebar" />
                     </Link>
                     <button
                         type="button"
                         onClick={onCloseMobile}
-                        className="ml-2 rounded-lg p-2 text-[#FAF6EE]/80 hover:bg-[#4A3408] lg:hidden"
+                        className={`ml-2 rounded-lg p-2 lg:hidden ${theme.closeBtn}`}
                         aria-label="Tutup menu"
                     >
                         ✕
@@ -134,18 +135,23 @@ export function AdminSidebar({
                             item={item}
                             active={isRouteActive(currentUrl, item.matchPrefix)}
                             isCollapsed={isCollapsed}
+                            theme={theme}
                             onCloseMobile={onCloseMobile}
                         />
                     ))}
                 </nav>
 
-                <div className="shrink-0 border-t border-white/12 p-3">
+                <div className={`shrink-0 border-t p-3 ${theme.footerBorder}`}>
                     {!collapsed && (
-                        <div className="mb-2 rounded-md bg-[#4A3408] px-3 py-2.5 text-xs text-[#FAF6EE]">
-                            <div className="font-semibold text-[#F5D78E]">
+                        <div
+                            className={`mb-2 rounded-md px-3 py-2.5 text-xs ${theme.roleBox}`}
+                        >
+                            <div className={`font-semibold ${theme.roleTitle}`}>
                                 {userRole}
                             </div>
-                            <div className="truncate text-[11px] text-[#EDE4D3]/80">
+                            <div
+                                className={`truncate text-[11px] ${theme.roleSub}`}
+                            >
                                 Sinarmas Agribusiness
                             </div>
                             {!isAuthenticated && (
@@ -161,7 +167,7 @@ export function AdminSidebar({
                     <button
                         type="button"
                         onClick={onToggleCollapse}
-                        className="ek-btn hidden min-h-10 w-full items-center justify-center rounded-md border border-white/18 px-3 py-2 text-xs font-medium text-[#EDE4D3]/85 hover:bg-[#4A3408] hover:text-white lg:flex"
+                        className={`ek-btn hidden min-h-10 w-full items-center justify-center rounded-md border px-3 py-2 text-xs font-medium lg:flex ${theme.collapseBtn}`}
                     >
                         {collapsed ? '→' : '← Lipat Sidebar'}
                     </button>

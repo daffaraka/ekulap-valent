@@ -52,18 +52,20 @@ class DashboardTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        app()->detectEnvironment(fn (): string => 'local');
+        app()->detectEnvironment(fn(): string => 'local');
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('isDevelopment', true)
+            ->assertInertia(
+                fn(Assert $page) => $page
+                    ->where('isDevelopment', true)
             );
 
-        app()->detectEnvironment(fn (): string => 'production');
+        app()->detectEnvironment(fn(): string => 'production');
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('isDevelopment', false)
+            ->assertInertia(
+                fn(Assert $page) => $page
+                    ->where('isDevelopment', false)
             );
     }
 }

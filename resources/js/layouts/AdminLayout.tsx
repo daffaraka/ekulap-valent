@@ -44,6 +44,7 @@ export default function AdminLayout({
                 pendingTphLots={pendingTphLots}
                 userRole={user?.role ?? 'Tinjauan Dashboard'}
                 isAuthenticated={Boolean(user)}
+                isDevelopment={isDevelopment}
                 onCloseMobile={() => setMobileOpen(false)}
                 onToggleCollapse={() => setCollapsed((prev) => !prev)}
             />
@@ -67,6 +68,7 @@ export default function AdminLayout({
             <MobileBottomNav
                 currentUrl={page.url}
                 userRole={user?.role ?? 'Tinjauan Dashboard'}
+                isDevelopment={isDevelopment}
             />
         </div>
     );
