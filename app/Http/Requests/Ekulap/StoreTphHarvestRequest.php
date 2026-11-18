@@ -33,7 +33,7 @@ class StoreTphHarvestRequest extends FormRequest
             'input_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'weighed_at' => ['nullable', 'date'],
             'photos' => ['required', 'array', 'min:3', 'max:10'],
-            'photos.*' => ['required', 'image', 'max:5120'],
+            'photos.*' => ['required', 'image', 'max:15360'],
         ];
     }
 

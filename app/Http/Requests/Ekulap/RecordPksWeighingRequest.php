@@ -20,7 +20,7 @@ class RecordPksWeighingRequest extends FormRequest
             'pks_ticket_number' => ['required', 'string', 'max:64'],
             'pks_net_weight_kg' => ['required', 'numeric', 'min:1', 'max:100000'],
             'arrived_at' => ['nullable', 'date'],
-            'pks_slip_photo' => ['nullable', 'image', 'max:5120'],
+            'pks_slip_photo' => ['nullable', 'image', 'max:15360'],
         ];
     }
 }

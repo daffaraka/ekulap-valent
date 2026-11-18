@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\DeliveryStatus;
 use App\Enums\TransportStatus;
+use App\Models\Block;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderItem;
 use App\Models\TphHarvestRecord;
@@ -26,14 +27,11 @@ class HarvestLoadingService
     public function createHarvestRecord(array $data, User $recorder): TphHarvestRecord
     {
         /** @var TphPoint $tphPoint */
-        $tphPoint = TphPoint::query()->with('block')->findOrFail((int) $data['tph_point_id']);
+        $tphPoint = TphPoint::query()->findOrFail((int) $data['tph_point_id']);
 
         $blockId = isset($data['block_id']) ? (int) $data['block_id'] : $tphPoint->block_id;
-        if ($tphPoint->block_id !== $blockId) {
-            throw ValidationException::withMessages([
-                'tph_point_id' => 'Titik TPH yang dipilih tidak termasuk dalam Blok yang dipilih.',
-            ]);
-        }
+        /** @var Block $block */
+        $block = Block::query()->findOrFail($blockId);
 
         $grossWeight = round((float) $data['gross_weight_kg'], 2);
         if ($grossWeight <= 0) {
@@ -81,7 +79,7 @@ class HarvestLoadingService
         return DB::transaction(function () use (
             $data,
             $tphPoint,
-            $blockId,
+            $block,
             $workerIds,
             $recorder,
             $weigherUserId,
@@ -95,8 +93,8 @@ class HarvestLoadingService
             $record = TphHarvestRecord::create([
                 'lot_number' => $data['lot_number'] ?? $this->codeGenerator->nextHarvestLotNumber($workDate),
                 'work_date' => $workDate->toDateString(),
-                'division_id' => $tphPoint->block->division_id,
-                'block_id' => $blockId,
+                'division_id' => $block->division_id,
+                'block_id' => $block->id,
                 'tph_point_id' => $tphPoint->id,
                 'worker_id' => $workerIds[0],
                 'recorder_user_id' => $recorder->id,

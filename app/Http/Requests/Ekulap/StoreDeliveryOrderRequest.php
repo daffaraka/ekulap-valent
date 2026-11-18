@@ -28,7 +28,7 @@ class StoreDeliveryOrderRequest extends FormRequest
             'delivery_status' => ['nullable', Rule::in(DeliveryStatus::values())],
             'departed_at' => ['nullable', 'date'],
             'loading_photos' => [$isDispatched ? 'required' : 'nullable', 'array', $isDispatched ? 'min:1' : 'min:0', 'max:2'],
-            'loading_photos.*' => ['required', 'image', 'max:5120'],
+            'loading_photos.*' => ['required', 'image', 'max:15360'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.tph_harvest_record_id' => ['required', 'integer', 'exists:tph_harvest_records,id'],
             'items.*.loaded_sacks' => ['required', 'integer', 'min:1'],

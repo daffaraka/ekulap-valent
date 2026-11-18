@@ -1,0 +1,50 @@
+<?php
+
+return [
+    'accepted' => 'Isian :attribute harus diterima.',
+    'array' => 'Isian :attribute harus berupa daftar/array.',
+    'between' => [
+        'numeric' => 'Isian :attribute harus bernilai antara :min sampai :max.',
+    ],
+    'date' => 'Isian :attribute harus berupa tanggal yang valid.',
+    'email' => 'Isian :attribute harus berupa alamat email yang valid.',
+    'exists' => ':attribute yang dipilih tidak ditemukan.',
+    'image' => 'File :attribute harus berupa gambar (JPG, PNG, atau WebP).',
+    'in' => ':attribute yang dipilih tidak valid.',
+    'integer' => 'Isian :attribute harus berupa bilangan bulat.',
+    'max' => [
+        'array' => 'Jumlah :attribute maksimal :max item.',
+        'file' => 'Ukuran file :attribute maksimal :max kilobyte.',
+        'numeric' => 'Isian :attribute maksimal bernilai :max.',
+        'string' => 'Isian :attribute maksimal :max karakter.',
+    ],
+    'min' => [
+        'array' => 'Jumlah :attribute minimal :min item.',
+        'file' => 'Ukuran file :attribute minimal :min kilobyte.',
+        'numeric' => 'Isian :attribute minimal bernilai :min.',
+        'string' => 'Isian :attribute minimal :min karakter.',
+    ],
+    'numeric' => 'Isian :attribute harus berupa angka.',
+    'regex' => 'Format :attribute tidak valid.',
+    'required' => 'Isian :attribute wajib diisi.',
+    'string' => 'Isian :attribute harus berupa teks.',
+    'unique' => ':attribute sudah terdaftar dan tidak boleh duplikat.',
+    'uploaded' => 'File :attribute gagal diunggah karena ukuran file terlalu besar atau koneksi terputus.',
+
+    'attributes' => [
+        'work_date' => 'Tanggal Kerja',
+        'block_id' => 'Blok',
+        'tph_point_id' => 'Titik TPH',
+        'worker_ids' => 'Tenaga Kerja',
+        'weigher_user_id' => 'Petugas Timbang',
+        'harvest_type' => 'Jenis Hasil',
+        'sack_count' => 'Jumlah Karung',
+        'tph_count' => 'Jumlah TPH',
+        'gross_weight_kg' => 'Berat Timbang (Kg)',
+        'photos' => 'Foto Bukti Lapangan',
+        'photos.*' => 'Foto Bukti Lapangan',
+        'loading_photos' => 'Foto Pengangkutan SPB',
+        'loading_photos.*' => 'Foto Pengangkutan SPB',
+        'pks_slip_photo' => 'Foto Struk Timbangan PKS',
+    ],
+];

@@ -19,6 +19,13 @@ Options -Indexes
     Header always unset X-Powered-By
 </IfModule>
 
+<IfModule mod_php.c>
+    php_value upload_max_filesize 32M
+    php_value post_max_size 64M
+    php_value max_file_uploads 20
+    php_value memory_limit 256M
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
