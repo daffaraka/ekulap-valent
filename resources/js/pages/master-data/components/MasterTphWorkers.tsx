@@ -1,6 +1,10 @@
-import { router, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { StatusBadge } from '@/components/ekulap/StatusBadge';
+import { DataTable } from '@/components/ekulap/DataTable';
+import {
+    buildTphColumns,
+    buildWorkerColumns,
+} from '@/pages/master-data/components/masterDataColumns';
 import type { Block, Division, TphPoint, Worker } from '@/types';
 
 type MasterTphWorkersProps = {
@@ -125,65 +129,15 @@ export function MasterTphWorkers({
                     </form>
                 )}
 
-                <div className="overflow-x-auto rounded-lg border border-[#102B26]/10 bg-white shadow-sm">
-                    <table className="w-full text-left text-xs">
-                        <thead className="border-b border-[#102B26]/10 bg-[#E9EEE9]/70 text-[#5A6C68]">
-                            <tr>
-                                <th className="px-4 py-3 font-semibold">
-                                    Kode TPH
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Blok & Divisi
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Patokan Lokasi
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Koordinat Terkunci
-                                </th>
-                                {canModify && (
-                                    <th className="px-4 py-3 text-right font-semibold">
-                                        Aksi
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E9EEE9]">
-                            {tphPoints.map((tph) => (
-                                <tr key={tph.id}>
-                                    <td className="px-4 py-3 font-bold text-[#1C5143]">
-                                        {tph.code}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        Blok {tph.block?.code} (
-                                        {tph.block?.division?.code})
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {tph.location_label}
-                                    </td>
-                                    <td className="px-4 py-3 font-mono text-[11px] text-[#466059]">
-                                        {tph.latitude}, {tph.longitude}
-                                    </td>
-                                    {canModify && (
-                                        <td className="px-4 py-3 text-right">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    router.delete(
-                                                        `/master-data/tph-points/${tph.id}`,
-                                                    )
-                                                }
-                                                className="text-[11px] font-semibold text-[#8C2323]"
-                                            >
-                                                Hapus
-                                            </button>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <DataTable
+                    data={tphPoints}
+                    columns={buildTphColumns(canModify)}
+                    getRowKey={(t) => t.id}
+                    searchableText={(t) =>
+                        `${t.code} ${t.block?.code ?? ''} ${t.block?.division?.code ?? ''} ${t.location_label}`
+                    }
+                    searchPlaceholder="Cari kode TPH / blok / lokasi..."
+                />
             </div>
         );
     }
@@ -248,66 +202,15 @@ export function MasterTphWorkers({
                 </form>
             )}
 
-            <div className="overflow-x-auto rounded-lg border border-[#102B26]/10 bg-white shadow-sm">
-                <table className="w-full text-left text-xs">
-                    <thead className="border-b border-[#102B26]/10 bg-[#E9EEE9]/70 text-[#5A6C68]">
-                        <tr>
-                            <th className="px-4 py-3 font-semibold">
-                                Kode / NIK
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Nama Pekerja
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Divisi Asal
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Jenis Pekerjaan
-                            </th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            {canModify && (
-                                <th className="px-4 py-3 text-right font-semibold">
-                                    Aksi
-                                </th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E9EEE9]">
-                        {workers.map((worker) => (
-                            <tr key={worker.id}>
-                                <td className="px-4 py-3 font-bold">
-                                    {worker.worker_code}
-                                </td>
-                                <td className="px-4 py-3 font-semibold">
-                                    {worker.name}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {worker.division?.code}
-                                </td>
-                                <td className="px-4 py-3">{worker.job_type}</td>
-                                <td className="px-4 py-3">
-                                    <StatusBadge status={worker.status} />
-                                </td>
-                                {canModify && (
-                                    <td className="px-4 py-3 text-right">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.patch(
-                                                    `/master-data/workers/${worker.id}/toggle`,
-                                                )
-                                            }
-                                            className="text-[11px] font-semibold text-[#1C5143]"
-                                        >
-                                            Ubah Status
-                                        </button>
-                                    </td>
-                                )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <DataTable
+                data={workers}
+                columns={buildWorkerColumns(canModify)}
+                getRowKey={(w) => w.id}
+                searchableText={(w) =>
+                    `${w.worker_code} ${w.name} ${w.division?.code ?? ''} ${w.job_type} ${w.status}`
+                }
+                searchPlaceholder="Cari NIK / nama pekerja / jabatan..."
+            />
         </div>
     );
 }

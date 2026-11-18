@@ -1,5 +1,10 @@
-import { router, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { DataTable } from '@/components/ekulap/DataTable';
+import {
+    buildBlockColumns,
+    buildDivisionColumns,
+} from '@/pages/master-data/components/masterDataColumns';
 import type { Block, Division } from '@/types';
 
 type MasterDivisionsBlocksProps = {
@@ -82,57 +87,13 @@ export function MasterDivisionsBlocks({
                     </form>
                 )}
 
-                <div className="overflow-x-auto rounded-lg border border-[#102B26]/10 bg-white shadow-sm">
-                    <table className="w-full text-left text-xs">
-                        <thead className="border-b border-[#102B26]/10 bg-[#E9EEE9]/70 text-[#5A6C68]">
-                            <tr>
-                                <th className="px-4 py-3 font-semibold">
-                                    Kode Divisi
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Nama Divisi
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Jumlah Blok & Pekerja
-                                </th>
-                                {canModify && (
-                                    <th className="px-4 py-3 text-right font-semibold">
-                                        Aksi
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E9EEE9]">
-                            {divisions.map((div) => (
-                                <tr key={div.id}>
-                                    <td className="px-4 py-3 font-bold">
-                                        {div.code}
-                                    </td>
-                                    <td className="px-4 py-3">{div.name}</td>
-                                    <td className="px-4 py-3 text-[#466059]">
-                                        {div.blocks_count ?? 0} Blok •{' '}
-                                        {div.workers_count ?? 0} Pekerja
-                                    </td>
-                                    {canModify && (
-                                        <td className="px-4 py-3 text-right">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    router.delete(
-                                                        `/master-data/divisions/${div.id}`,
-                                                    )
-                                                }
-                                                className="text-[11px] font-semibold text-[#8C2323]"
-                                            >
-                                                Hapus
-                                            </button>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <DataTable
+                    data={divisions}
+                    columns={buildDivisionColumns(canModify)}
+                    getRowKey={(d) => d.id}
+                    searchableText={(d) => `${d.code} ${d.name}`}
+                    searchPlaceholder="Cari kode atau nama divisi..."
+                />
             </div>
         );
     }
@@ -203,65 +164,15 @@ export function MasterDivisionsBlocks({
                 </form>
             )}
 
-            <div className="overflow-x-auto rounded-lg border border-[#102B26]/10 bg-white shadow-sm">
-                <table className="w-full text-left text-xs">
-                    <thead className="border-b border-[#102B26]/10 bg-[#E9EEE9]/70 text-[#5A6C68]">
-                        <tr>
-                            <th className="px-4 py-3 font-semibold">
-                                Kode Blok
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Divisi Induk
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Tahun Tanam
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Titik TPH
-                            </th>
-                            {canModify && (
-                                <th className="px-4 py-3 text-right font-semibold">
-                                    Aksi
-                                </th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E9EEE9]">
-                        {blocks.map((block) => (
-                            <tr key={block.id}>
-                                <td className="px-4 py-3 font-bold">
-                                    {block.code}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {block.division?.code} —{' '}
-                                    {block.division?.name}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {block.planting_year}
-                                </td>
-                                <td className="px-4 py-3 text-[#466059]">
-                                    {block.tph_points_count ?? 0} Titik TPH
-                                </td>
-                                {canModify && (
-                                    <td className="px-4 py-3 text-right">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.delete(
-                                                    `/master-data/blocks/${block.id}`,
-                                                )
-                                            }
-                                            className="text-[11px] font-semibold text-[#8C2323]"
-                                        >
-                                            Hapus
-                                        </button>
-                                    </td>
-                                )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <DataTable
+                data={blocks}
+                columns={buildBlockColumns(canModify)}
+                getRowKey={(b) => b.id}
+                searchableText={(b) =>
+                    `${b.code} ${b.division?.code ?? ''} ${b.division?.name ?? ''} ${b.planting_year}`
+                }
+                searchPlaceholder="Cari blok / divisi / tahun tanam..."
+            />
         </div>
     );
 }

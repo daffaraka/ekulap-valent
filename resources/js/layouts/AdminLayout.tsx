@@ -11,6 +11,7 @@ type SharedPageProps = {
     auth?: { user: User | null };
     flash?: FlashMessages;
     pendingTphLots?: number;
+    isDevelopment?: boolean;
 };
 
 type AdminLayoutProps = {
@@ -30,9 +31,10 @@ export default function AdminLayout({
 
     const user = page.props.auth?.user ?? null;
     const pendingTphLots = page.props.pendingTphLots ?? 0;
+    const isDevelopment = Boolean(page.props.isDevelopment);
 
     return (
-        <div className="flex min-h-screen overflow-x-hidden bg-[#F6F8F6] text-[#102B26]">
+        <div className="flex min-h-screen overflow-x-clip bg-[#F6F8F6] text-[#102B26]">
             <Head title={title} />
 
             <AdminSidebar
@@ -51,6 +53,7 @@ export default function AdminLayout({
                     title={title}
                     subtitle={subtitle}
                     user={user}
+                    isDevelopment={isDevelopment}
                     onOpenMobileMenu={() => setMobileOpen(true)}
                     onToggleDesktopSidebar={() => setCollapsed((prev) => !prev)}
                 />

@@ -1,4 +1,6 @@
 import { Link } from '@inertiajs/react';
+import { DataTable } from '@/components/ekulap/DataTable';
+import type { DataTableColumn } from '@/components/ekulap/dataTableUtils';
 import { StatusBadge } from '@/components/ekulap/StatusBadge';
 import { formatDateOnly, formatKg } from '@/services/formatters';
 import type { DeliveryOrder, TphHarvestRecord } from '@/types';
@@ -8,101 +10,108 @@ type RecentActivityTablesProps = {
     recentDeliveries: DeliveryOrder[];
 };
 
+const resolveWorkerNames = (item: TphHarvestRecord): string => {
+    if (item.workers && item.workers.length > 0) {
+        return item.workers.map((w) => w.name).join(', ');
+    }
+    return item.worker?.name ?? '-';
+};
+
+const harvestColumns: DataTableColumn<TphHarvestRecord>[] = [
+    {
+        key: 'lot',
+        header: 'Lot / Tgl',
+        sortValue: (row) => `${row.work_date} ${row.lot_number}`,
+        render: (item) => (
+            <>
+                <div className="font-semibold text-[#102B26]">
+                    {item.lot_number}
+                </div>
+                <div className="text-[11px] text-[#5A6C68]">
+                    {formatDateOnly(item.work_date)}
+                </div>
+            </>
+        ),
+    },
+    {
+        key: 'location',
+        header: 'Blok, TPH & Pekerja',
+        sortValue: (row) =>
+            `${row.block?.code ?? ''} ${row.tph_point?.code ?? ''}`,
+        render: (item) => (
+            <>
+                <div className="font-medium text-[#102B26]">
+                    Blok {item.block?.code ?? '-'} ·{' '}
+                    {item.tph_point?.code ?? '-'}
+                </div>
+                <div className="text-[11px] text-[#5A6C68]">
+                    {resolveWorkerNames(item)} ({item.harvest_type})
+                </div>
+            </>
+        ),
+    },
+    {
+        key: 'weight',
+        header: 'Karung / Berat',
+        sortValue: (row) => row.net_weight_kg,
+        render: (item) => (
+            <>
+                <div className="font-medium text-[#102B26]">
+                    {item.loaded_sack_count}/{item.sack_count} Karung
+                </div>
+                <div className="text-[11px] text-[#5A6C68]">
+                    {formatKg(item.net_weight_kg)}
+                </div>
+            </>
+        ),
+    },
+    {
+        key: 'status',
+        header: 'Status Angkut',
+        sortValue: (row) => row.transport_status,
+        render: (item) => <StatusBadge status={item.transport_status} />,
+    },
+];
+
 export function RecentActivityTables({
     recentHarvests,
     recentDeliveries,
 }: RecentActivityTablesProps) {
-    const resolveWorkerNames = (item: TphHarvestRecord): string => {
-        if (item.workers && item.workers.length > 0) {
-            return item.workers.map((w) => w.name).join(', ');
-        }
-        return item.worker?.name ?? '-';
-    };
-
     return (
         <div className="grid gap-6 lg:grid-cols-12">
             <div className="min-w-0 rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm lg:col-span-7">
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-base font-semibold tracking-tight text-[#102B26]">
                         Catatan Timbang TPH Terbaru
                     </h2>
-                    <Link
-                        href="/tph-harvest"
-                        className="text-xs font-semibold text-[#1C5143] hover:underline"
-                    >
-                        Lihat Semua →
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/rekapan-kutip-lapis"
+                            className="text-xs font-semibold text-[#1C5143] hover:underline"
+                        >
+                            Rekapan per Tanggal →
+                        </Link>
+                        <Link
+                            href="/tph-harvest"
+                            className="text-xs font-semibold text-[#1C5143] hover:underline"
+                        >
+                            Lihat Semua →
+                        </Link>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                        <thead>
-                            <tr className="border-b border-[#102B26]/10 text-[#5A6C68]">
-                                <th className="py-2 pr-3 font-medium">
-                                    Lot / Tgl
-                                </th>
-                                <th className="py-2 pr-3 font-medium">
-                                    Blok, TPH &amp; Pekerja
-                                </th>
-                                <th className="py-2 pr-3 font-medium">
-                                    Karung / Berat
-                                </th>
-                                <th className="py-2 font-medium">
-                                    Status Angkut
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#102B26]/8">
-                            {recentHarvests.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={4}
-                                        className="py-6 text-center text-xs text-[#5A6C68]"
-                                    >
-                                        Belum ada catatan timbang TPH.
-                                    </td>
-                                </tr>
-                            ) : (
-                                recentHarvests.map((item) => (
-                                    <tr key={item.id}>
-                                        <td className="py-2.5 pr-3">
-                                            <div className="font-semibold text-[#102B26]">
-                                                {item.lot_number}
-                                            </div>
-                                            <div className="text-[11px] text-[#5A6C68]">
-                                                {formatDateOnly(item.work_date)}
-                                            </div>
-                                        </td>
-                                        <td className="py-2.5 pr-3">
-                                            <div className="font-medium text-[#102B26]">
-                                                Blok {item.block?.code ?? '-'} ·{' '}
-                                                {item.tph_point?.code ?? '-'}
-                                            </div>
-                                            <div className="text-[11px] text-[#5A6C68]">
-                                                {resolveWorkerNames(item)} (
-                                                {item.harvest_type})
-                                            </div>
-                                        </td>
-                                        <td className="py-2.5 pr-3">
-                                            <div className="font-medium text-[#102B26]">
-                                                {item.loaded_sack_count}/
-                                                {item.sack_count} Karung
-                                            </div>
-                                            <div className="text-[11px] text-[#5A6C68]">
-                                                {formatKg(item.net_weight_kg)}
-                                            </div>
-                                        </td>
-                                        <td className="py-2.5">
-                                            <StatusBadge
-                                                status={item.transport_status}
-                                            />
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataTable
+                    data={recentHarvests}
+                    columns={harvestColumns}
+                    getRowKey={(row) => row.id}
+                    defaultPageSize={5}
+                    showPageSize={false}
+                    searchableText={(row) =>
+                        `${row.lot_number} ${row.block?.code ?? ''} ${row.tph_point?.code ?? ''} ${resolveWorkerNames(row)}`
+                    }
+                    searchPlaceholder="Cari lot / blok / pekerja..."
+                    emptyMessage="Belum ada catatan timbang TPH."
+                />
             </div>
 
             <div className="min-w-0 rounded-lg border border-[#102B26]/10 bg-white p-5 shadow-sm lg:col-span-5">

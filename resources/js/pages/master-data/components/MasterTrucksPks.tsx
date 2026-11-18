@@ -1,6 +1,10 @@
-import { router, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { formatKg } from '@/services/formatters';
+import { DataTable } from '@/components/ekulap/DataTable';
+import {
+    buildPksColumns,
+    buildTruckColumns,
+} from '@/pages/master-data/components/masterDataColumns';
 import type { PksMill, Truck } from '@/types';
 
 type MasterTrucksPksProps = {
@@ -100,64 +104,15 @@ export function MasterTrucksPks({
                     </form>
                 )}
 
-                <div className="overflow-x-auto rounded-lg border border-[#102B26]/10 bg-white shadow-sm">
-                    <table className="w-full text-left text-xs">
-                        <thead className="border-b border-[#102B26]/10 bg-[#E9EEE9]/70 text-[#5A6C68]">
-                            <tr>
-                                <th className="px-4 py-3 font-semibold">
-                                    Nomor Polisi
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Nama Supir
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    No. HP / WhatsApp
-                                </th>
-                                <th className="px-4 py-3 font-semibold">
-                                    Kapasitas Muat
-                                </th>
-                                {canModify && (
-                                    <th className="px-4 py-3 text-right font-semibold">
-                                        Aksi
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E9EEE9]">
-                            {trucks.map((truck) => (
-                                <tr key={truck.id}>
-                                    <td className="px-4 py-3 font-bold">
-                                        {truck.plate_number}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {truck.driver_name}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {truck.driver_phone}
-                                    </td>
-                                    <td className="px-4 py-3 font-semibold">
-                                        {formatKg(truck.capacity_kg)}
-                                    </td>
-                                    {canModify && (
-                                        <td className="px-4 py-3 text-right">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    router.delete(
-                                                        `/master-data/trucks/${truck.id}`,
-                                                    )
-                                                }
-                                                className="text-[11px] font-semibold text-[#8C2323]"
-                                            >
-                                                Hapus
-                                            </button>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <DataTable
+                    data={trucks}
+                    columns={buildTruckColumns(canModify)}
+                    getRowKey={(t) => t.id}
+                    searchableText={(t) =>
+                        `${t.plate_number} ${t.driver_name} ${t.driver_phone}`
+                    }
+                    searchPlaceholder="Cari nopol / nama supir / HP..."
+                />
             </div>
         );
     }
@@ -206,50 +161,13 @@ export function MasterTrucksPks({
                 </form>
             )}
 
-            <div className="overflow-x-auto rounded-lg border border-[#102B26]/10 bg-white shadow-sm">
-                <table className="w-full text-left text-xs">
-                    <thead className="border-b border-[#102B26]/10 bg-[#E9EEE9]/70 text-[#5A6C68]">
-                        <tr>
-                            <th className="px-4 py-3 font-semibold">
-                                Kode PKS
-                            </th>
-                            <th className="px-4 py-3 font-semibold">
-                                Nama Pabrik Tujuan
-                            </th>
-                            {canModify && (
-                                <th className="px-4 py-3 text-right font-semibold">
-                                    Aksi
-                                </th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E9EEE9]">
-                        {pksMills.map((mill) => (
-                            <tr key={mill.id}>
-                                <td className="px-4 py-3 font-bold">
-                                    {mill.code}
-                                </td>
-                                <td className="px-4 py-3">{mill.name}</td>
-                                {canModify && (
-                                    <td className="px-4 py-3 text-right">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.delete(
-                                                    `/master-data/pks-mills/${mill.id}`,
-                                                )
-                                            }
-                                            className="text-[11px] font-semibold text-[#8C2323]"
-                                        >
-                                            Hapus
-                                        </button>
-                                    </td>
-                                )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <DataTable
+                data={pksMills}
+                columns={buildPksColumns(canModify)}
+                getRowKey={(m) => m.id}
+                searchableText={(m) => `${m.code} ${m.name}`}
+                searchPlaceholder="Cari kode atau nama PKS..."
+            />
         </div>
     );
 }
