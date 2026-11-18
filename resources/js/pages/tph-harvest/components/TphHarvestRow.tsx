@@ -1,4 +1,5 @@
 import { StatusBadge } from '@/components/ekulap/StatusBadge';
+import { getTphHarvestRowClass } from '@/pages/tph-harvest/components/TphHarvestTable';
 import {
     formatDateOnly,
     formatDateTime,
@@ -35,9 +36,12 @@ export function TphHarvestRow({
         record.workers && record.workers.length > 0
             ? record.workers.map((w) => w.name).join(', ')
             : (record.worker?.name ?? '-');
+    const rowHighlight =
+        getTphHarvestRowClass(record.transport_status) ||
+        'hover:bg-[#E9EEE9]/35';
 
     return (
-        <tr className="hover:bg-[#E9EEE9]/35">
+        <tr className={rowHighlight}>
             <td className="px-4 py-3">
                 <div className="font-bold text-[#102B26]">
                     {record.lot_number}
