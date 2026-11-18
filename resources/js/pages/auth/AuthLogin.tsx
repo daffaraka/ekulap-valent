@@ -1,7 +1,7 @@
-import { Head, useForm, usePage } from "@inertiajs/react";
-import type { FormEvent } from "react";
-import InputError from "@/components/input-error";
-import { AuthLoginBrandPanel } from "@/pages/auth/components/AuthLoginBrandPanel";
+import { Head, useForm, usePage } from '@inertiajs/react';
+import type { FormEvent } from 'react';
+import InputError from '@/components/input-error';
+import { AuthLoginBrandPanel } from '@/pages/auth/components/AuthLoginBrandPanel';
 
 type DemoAccount = {
     label: string;
@@ -22,8 +22,8 @@ export default function AuthLogin({
         .errors;
 
     const { data, setData, post, processing, errors, clearErrors } = useForm({
-        email: "",
-        password: "",
+        email: '',
+        password: '',
         remember: true,
     });
 
@@ -32,17 +32,12 @@ export default function AuthLogin({
         ...errors,
     };
 
-    const topErrorMessage =
-        mergedErrors.email ??
-        mergedErrors.password ??
-        Object.values(mergedErrors).find(Boolean);
-
     const handleSubmit = (event: FormEvent): void => {
         event.preventDefault();
         clearErrors();
-        post("/login", {
+        post('/login', {
             onError: () => {
-                setData("password", "");
+                setData('password', '');
             },
         });
     };
@@ -52,7 +47,7 @@ export default function AuthLogin({
         setData({
             ...data,
             email: nik,
-            password: "password",
+            password: 'password',
         });
     };
 
@@ -101,16 +96,16 @@ export default function AuthLogin({
                                 name="email"
                                 value={data.email}
                                 onChange={(e) => {
-                                    clearErrors("email");
-                                    setData("email", e.target.value);
+                                    clearErrors('email');
+                                    setData('email', e.target.value);
                                 }}
                                 required
                                 autoFocus
                                 placeholder="Contoh: 10010001"
                                 className={`min-h-11 w-full rounded-md border bg-[#E9EEE9]/45 px-3.5 text-sm text-[#102B26] focus:bg-white focus:outline-none ${
                                     mergedErrors.email
-                                        ? "border-[#9E2A2B] focus:border-[#9E2A2B]"
-                                        : "border-[#C8D4C8] focus:border-[#1C5143]"
+                                        ? 'border-[#9E2A2B] focus:border-[#9E2A2B]'
+                                        : 'border-[#C8D4C8] focus:border-[#1C5143]'
                                 }`}
                             />
                             <InputError
@@ -132,15 +127,15 @@ export default function AuthLogin({
                                 name="password"
                                 value={data.password}
                                 onChange={(e) => {
-                                    clearErrors("password");
-                                    setData("password", e.target.value);
+                                    clearErrors('password');
+                                    setData('password', e.target.value);
                                 }}
                                 required
                                 placeholder="Masukkan kata sandi"
                                 className={`min-h-11 w-full rounded-md border bg-[#E9EEE9]/45 px-3.5 text-sm text-[#102B26] focus:bg-white focus:outline-none ${
                                     mergedErrors.password
-                                        ? "border-[#9E2A2B] focus:border-[#9E2A2B]"
-                                        : "border-[#C8D4C8] focus:border-[#1C5143]"
+                                        ? 'border-[#9E2A2B] focus:border-[#9E2A2B]'
+                                        : 'border-[#C8D4C8] focus:border-[#1C5143]'
                                 }`}
                             />
                             <InputError
@@ -154,7 +149,7 @@ export default function AuthLogin({
                                 type="checkbox"
                                 checked={data.remember}
                                 onChange={(e) =>
-                                    setData("remember", e.target.checked)
+                                    setData('remember', e.target.checked)
                                 }
                                 className="size-4 rounded border-[#C8D4C8] accent-[#1C5143]"
                             />
@@ -166,14 +161,14 @@ export default function AuthLogin({
                             disabled={processing}
                             className="min-h-11 w-full rounded-md bg-[#1C5143] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#102B26] disabled:opacity-60"
                         >
-                            {processing ? "Memverifikasi..." : "Masuk Aplikasi"}
+                            {processing ? 'Memverifikasi...' : 'Masuk Aplikasi'}
                         </button>
                     </form>
 
                     {demoAccounts.length > 0 && (
                         <div className="mt-6 border-t border-[#CFD9CF] pt-4">
                             <div className="mb-2 text-xs font-semibold text-[#466059]">
-                                Isi Cepat Akun Demo NIK (Kata Sandi:{" "}
+                                Isi Cepat Akun Demo NIK (Kata Sandi:{' '}
                                 <code className="rounded bg-[#E9EEE9] px-1.5 py-0.5 text-[#102B26]">
                                     password
                                 </code>
