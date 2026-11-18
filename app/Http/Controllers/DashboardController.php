@@ -8,6 +8,7 @@ use App\Models\DeliveryOrder;
 use App\Models\Division;
 use App\Models\TphHarvestRecord;
 use App\Services\AiInsightService;
+use App\Services\RestanAnalyticsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,36 +17,23 @@ class DashboardController extends Controller
 {
     public function __construct(
         private readonly AiInsightService $aiInsightService,
+        private readonly RestanAnalyticsService $restanService,
     ) {}
 
     public function index(Request $request): Response
     {
         $divisionId = $request->integer('division_id') ?: null;
-        $todayStart = now()->startOfDay();
+        $analytics = $this->restanService->computeSummary($divisionId);
 
         $harvestBase = TphHarvestRecord::query()
             ->when($divisionId, fn ($q) => $q->where('division_id', $divisionId));
 
-        $totalLots = (clone $harvestBase)->count();
-        $totalSacks = (int) (clone $harvestBase)->sum('sack_count');
-        $totalNetKg = round((float) (clone $harvestBase)->sum('net_weight_kg'), 2);
-        $totalLoadedSacks = (int) (clone $harvestBase)->sum('loaded_sack_count');
-        $remainingSacksAtTph = max(0, $totalSacks - $totalLoadedSacks);
-
-        $pendingRestanRecords = (clone $harvestBase)
-            ->whereIn('transport_status', [
-                TransportStatus::BelumDiangkut->value,
-                TransportStatus::DiangkutSebagian->value,
-            ])
-            ->get(['id', 'work_date', 'sack_count', 'loaded_sack_count']);
-
-        $pendingRestanLots = $pendingRestanRecords->count();
-        $cumulativeRestanDays = (int) $pendingRestanRecords->sum(
-            fn (TphHarvestRecord $record): int => max(
-                0,
-                (int) $record->work_date->startOfDay()->diffInDays($todayStart),
-            ),
-        );
+        $totalLots = $analytics['total_lots'];
+        $totalSacks = $analytics['total_sacks'];
+        $totalNetKg = $analytics['total_net_kg'];
+        $remainingSacksAtTph = $analytics['remaining_sacks'];
+        $pendingRestanLots = $analytics['pending_restan_lots'];
+        $cumulativeRestanDays = $analytics['cumulative_restan_days'];
 
         $chartStatuses = [
             TransportStatus::BelumDiangkut,
@@ -100,7 +88,10 @@ class DashboardController extends Controller
                 'remaining_sacks_at_tph' => $remainingSacksAtTph,
                 'active_spb_count' => $activeSpbCount,
                 'cumulative_restan_days' => $cumulativeRestanDays,
+                'max_restan_days' => $analytics['max_restan_days'],
                 'pending_restan_lots' => $pendingRestanLots,
+                'aged_restan_lots' => $analytics['aged_restan_lots'],
+                'pending_station_count' => $analytics['pending_station_count'],
             ],
             'statusBreakdown' => $statusBreakdown,
             'chartTotalSacks' => $chartTotalSacks,

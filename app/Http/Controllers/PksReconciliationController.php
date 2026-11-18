@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DeliveryStatus;
-use App\Enums\TransportStatus;
 use App\Http\Requests\Ekulap\RecordPksWeighingRequest;
 use App\Models\DeliveryOrder;
-use App\Models\DeliveryOrderItem;
-use App\Models\TphHarvestRecord;
+use App\Models\User;
+use App\Services\AuditLoggerService;
 use App\Services\HarvestLoadingService;
+use App\Services\ImageCompressionService;
+use App\Services\RestanAnalyticsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,6 +20,9 @@ class PksReconciliationController extends Controller
 {
     public function __construct(
         private readonly HarvestLoadingService $loadingService,
+        private readonly ImageCompressionService $imageCompressionService,
+        private readonly AuditLoggerService $auditLogger,
+        private readonly RestanAnalyticsService $restanService,
     ) {}
 
     public function index(Request $request): Response
@@ -34,41 +38,15 @@ class PksReconciliationController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $totalSacksAll = (int) TphHarvestRecord::query()->sum('sack_count');
-        $totalLoadedAll = (int) TphHarvestRecord::query()->sum('loaded_sack_count');
-        $unloadedSacksAtTph = max(0, $totalSacksAll - $totalLoadedAll);
-        $belumMuatSpbSacks = (int) DeliveryOrder::query()
-            ->where('delivery_status', DeliveryStatus::BelumMuat->value)
-            ->sum('total_sacks_loaded');
-        $waitingSacksToPks = $unloadedSacksAtTph + $belumMuatSpbSacks;
-
+        $analytics = $this->restanService->computeSummary(null, $today->toDateString());
+        $totalSacksAll = $analytics['total_sacks'];
+        $waitingSacksToPks = $analytics['remaining_sacks'];
         $totalEstimatedKg = round((float) DeliveryOrder::query()->sum('total_estimated_kg'), 2);
+        $unsentDays = $analytics['cumulative_restan_days'];
+        $totalRestanSdHi = $waitingSacksToPks;
 
-        $unsentLots = TphHarvestRecord::query()
-            ->whereIn('transport_status', [
-                TransportStatus::BelumDiangkut->value,
-                TransportStatus::DiangkutSebagian->value,
-            ])
-            ->get(['id', 'work_date']);
-
-        $unsentDays = (int) $unsentLots->sum(
-            fn (TphHarvestRecord $record): int => max(
-                0,
-                (int) $record->work_date->startOfDay()->diffInDays($today),
-            ),
-        );
-
-        $todayTotalSacks = (int) TphHarvestRecord::query()
-            ->whereDate('work_date', $today->toDateString())
-            ->sum('sack_count');
-
-        $todaySentSacks = (int) DeliveryOrderItem::query()
-            ->whereHas('harvestRecord', fn ($q) => $q->whereDate('work_date', $today->toDateString()))
-            ->whereHas('deliveryOrder', fn ($q) => $q->where('delivery_status', DeliveryStatus::SudahDikirim->value))
-            ->sum('loaded_sacks');
-
-        $todaySentPercentage = $todayTotalSacks > 0
-            ? round(min(100.0, ($todaySentSacks / $todayTotalSacks) * 100), 1)
+        $restanPercentage = $totalSacksAll > 0
+            ? round(($totalRestanSdHi / $totalSacksAll) * 100, 1)
             : 0.0;
 
         return Inertia::render('pks-reconciliation/PksReconciliationIndex', [
@@ -80,9 +58,9 @@ class PksReconciliationController extends Controller
                 'waiting_sacks_to_pks' => $waitingSacksToPks,
                 'total_estimated_kg' => $totalEstimatedKg,
                 'unsent_days' => $unsentDays,
-                'today_sent_percentage' => $todaySentPercentage,
-                'today_sent_sacks' => $todaySentSacks,
-                'today_total_sacks' => $todayTotalSacks,
+                'today_sent_percentage' => $restanPercentage,
+                'today_sent_sacks' => $totalRestanSdHi,
+                'today_total_sacks' => $totalSacksAll,
             ],
             'deliveryStatuses' => DeliveryStatus::values(),
         ]);
@@ -93,10 +71,30 @@ class PksReconciliationController extends Controller
         $validated = $request->validated();
 
         if ($request->hasFile('pks_slip_photo')) {
-            $validated['pks_slip_photo_path'] = $request->file('pks_slip_photo')?->store('pks-slips', 'public');
+            $file = $request->file('pks_slip_photo');
+            if ($file !== null) {
+                $validated['pks_slip_photo_path'] = $this->imageCompressionService->storeCompressedImage($file, 'pks-slips');
+            }
         }
 
         $order = $this->loadingService->recordPksWeighing($deliveryOrder, $validated);
+
+        $shrinkagePct = $order->total_estimated_kg > 0 && $order->weight_shrinkage_kg !== null
+            ? round(($order->weight_shrinkage_kg / $order->total_estimated_kg) * 100, 2)
+            : 0.0;
+        $actor = $request->user();
+        $actorName = $actor instanceof User ? $actor->name : 'Checker PKS';
+        $severity = $shrinkagePct > 2.0 ? 'warning' : 'normal';
+
+        $this->auditLogger->log(
+            category: 'pks',
+            action: 'weighed',
+            humanMessage: "{$actorName} mencatat timbang PKS tiket {$order->pks_ticket_number} untuk {$order->spb_number} (Netto PKS {$order->pks_net_weight_kg} kg, susut {$order->weight_shrinkage_kg} kg / {$shrinkagePct}%).",
+            severity: $severity,
+            subject: $order,
+            actor: $actor instanceof User ? $actor : null,
+            fallbackActorName: $actorName,
+        );
 
         return redirect()
             ->route('pks-reconciliation.index')
