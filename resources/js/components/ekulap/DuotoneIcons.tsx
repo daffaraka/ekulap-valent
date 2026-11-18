@@ -281,3 +281,58 @@ export function IconCoconutPalm({ className = 'size-6', ...props }: IconProps) {
         </svg>
     );
 }
+
+export function IconDailyRecap({ className = 'size-5', ...props }: IconProps) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} {...props}>
+            <rect
+                x="3.5"
+                y="5"
+                width="17"
+                height="15.5"
+                rx="2.5"
+                fill="currentColor"
+                fillOpacity="0.16"
+                stroke="currentColor"
+                strokeWidth="1.6"
+            />
+            <path
+                d="M8 3.5V6.5M16 3.5V6.5M3.5 9.5H20.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+            />
+            <path
+                d="M7.5 13H12.5M7.5 16.5H16.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+            />
+        </svg>
+    );
+}
+
+export function IconShieldMonitor({
+    className = 'size-5',
+    ...props
+}: IconProps) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} {...props}>
+            <path
+                d="M12 3L4.5 6.2V11.8C4.5 16.55 7.7 20.35 12 21.5C16.3 20.35 19.5 16.55 19.5 11.8V6.2L12 3Z"
+                fill="currentColor"
+                fillOpacity="0.16"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M8.5 12.2L10.8 14.5L15.8 9.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}

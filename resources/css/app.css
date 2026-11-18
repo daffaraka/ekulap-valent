@@ -66,6 +66,8 @@
     --color-ek-deep-green: #102b26;
     --color-ek-pine: #1c5143;
     --color-ek-gold: #d6a84f;
+    --color-ek-brown: #5d420b;
+    --color-ek-brown-dark: #4a3408;
     --color-ek-mist: #e9eee9;
 }
 
@@ -112,13 +114,13 @@
     --chart-5: #9e2a2b;
     --radius: 0.5rem;
 
-    --sidebar: #102b26;
-    --sidebar-foreground: #f6f8f6;
-    --sidebar-primary: #1f3732;
-    --sidebar-primary-foreground: #f6f8f6;
-    --sidebar-accent: #1f3732;
-    --sidebar-accent-foreground: #f6f8f6;
-    --sidebar-border: rgba(246, 248, 246, 0.1);
+    --sidebar: #5d420b;
+    --sidebar-foreground: #faf6ee;
+    --sidebar-primary: #4a3408;
+    --sidebar-primary-foreground: #faf6ee;
+    --sidebar-accent: #4a3408;
+    --sidebar-accent-foreground: #faf6ee;
+    --sidebar-border: rgba(250, 246, 238, 0.14);
     --sidebar-ring: #d6a84f;
 }
 

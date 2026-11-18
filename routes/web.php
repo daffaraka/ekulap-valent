@@ -6,6 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryOrderController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\PksReconciliationController;
+use App\Http\Controllers\RekapanController;
+use App\Http\Controllers\SystemMonitorController;
 use App\Http\Controllers\TphHarvestController;
 use App\Http\Controllers\UserManagementController;
 use App\Models\User;
@@ -27,6 +29,12 @@ Route::middleware(['auth', 'verified', 'role'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->middleware('role:Admin,Supervisi/Asisten,Pimpinan (EM/RC),Supir,Checker PKS')
         ->name('dashboard');
+
+    // Rekapan Kutip Lapis per Tanggal
+    Route::middleware('role:Admin,Supervisi/Asisten,Pimpinan (EM/RC),Supir,Checker PKS')->group(function (): void {
+        Route::get('rekapan-kutip-lapis', [RekapanController::class, 'index'])->name('rekapan.index');
+        Route::get('rekapan-kutip-lapis/export', [RekapanController::class, 'exportCsv'])->name('rekapan.export');
+    });
 
     // Tabel 8: Catatan Hasil & Timbang TPH
     Route::get('tph-harvest', [TphHarvestController::class, 'index'])->name('tph-harvest.index');
@@ -88,6 +96,12 @@ Route::middleware(['auth', 'verified', 'role'])->group(function (): void {
         Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
         Route::put('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
         Route::patch('users/{user}/toggle', [UserManagementController::class, 'toggleStatus'])->name('users.toggle');
+    });
+
+    // Monitor Kesehatan Aplikasi, Upload & Keamanan Login/Aktivitas (Khusus Admin & Pimpinan)
+    Route::middleware('role:Admin,Pimpinan (EM/RC)')->group(function (): void {
+        Route::get('system-monitor', [SystemMonitorController::class, 'index'])->name('system-monitor.index');
+        Route::get('system-monitor/export', [SystemMonitorController::class, 'exportCsv'])->name('system-monitor.export');
     });
 });
 

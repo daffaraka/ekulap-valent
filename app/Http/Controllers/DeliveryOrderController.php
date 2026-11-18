@@ -11,7 +11,9 @@ use App\Models\PksMill;
 use App\Models\TphHarvestRecord;
 use App\Models\Truck;
 use App\Models\User;
+use App\Services\AuditLoggerService;
 use App\Services\HarvestLoadingService;
+use App\Services\ImageCompressionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -22,6 +24,8 @@ class DeliveryOrderController extends Controller
 {
     public function __construct(
         private readonly HarvestLoadingService $loadingService,
+        private readonly ImageCompressionService $imageCompressionService,
+        private readonly AuditLoggerService $auditLogger,
     ) {}
 
     public function index(Request $request): Response
@@ -105,10 +109,7 @@ class DeliveryOrderController extends Controller
         /** @var list<UploadedFile> $uploadedFiles */
         $uploadedFiles = $request->file('loading_photos', []);
         foreach ($uploadedFiles as $file) {
-            $storedPath = $file->store('spb-loading-photos', 'public');
-            if ($storedPath !== false) {
-                $loadingPhotoPaths[] = $storedPath;
-            }
+            $loadingPhotoPaths[] = $this->imageCompressionService->storeCompressedImage($file, 'spb-loading-photos');
         }
         $validated['loading_photo_paths'] = $loadingPhotoPaths;
 
@@ -122,6 +123,15 @@ class DeliveryOrderController extends Controller
         );
 
         $order = $this->loadingService->createDeliveryOrder($validated, $items, $user);
+
+        $this->auditLogger->log(
+            category: 'spb',
+            action: 'created',
+            humanMessage: "{$user->name} membuat Surat Jalan {$order->spb_number} ({$order->total_sacks_loaded} karung · {$order->total_estimated_kg} kg · status {$order->delivery_status->value}).",
+            severity: 'normal',
+            subject: $order,
+            actor: $user,
+        );
 
         return redirect()
             ->route('surat-jalan.show', $order)
@@ -193,6 +203,20 @@ class DeliveryOrderController extends Controller
 
         $this->loadingService->appendItemsToDeliveryOrder($deliveryOrder, $items);
 
+        $actor = $request->user();
+        $actorName = $actor instanceof User ? $actor->name : 'Pengguna';
+        $addedSacks = array_sum(array_column($items, 'loaded_sacks'));
+
+        $this->auditLogger->log(
+            category: 'spb',
+            action: 'updated',
+            humanMessage: "{$actorName} menambahkan {$addedSacks} karung muatan tambahan ke Surat Jalan {$deliveryOrder->spb_number}.",
+            severity: 'normal',
+            subject: $deliveryOrder,
+            actor: $actor instanceof User ? $actor : null,
+            fallbackActorName: $actorName,
+        );
+
         return redirect()
             ->route('surat-jalan.show', $deliveryOrder)
             ->with('success', "Muatan tambahan berhasil dimasukkan ke {$deliveryOrder->spb_number}.");
@@ -205,7 +229,7 @@ class DeliveryOrderController extends Controller
 
         $request->validate([
             'loading_photos' => [$hasExistingPhotos ? 'nullable' : 'required', 'array', $hasExistingPhotos ? 'min:0' : 'min:1', 'max:2'],
-            'loading_photos.*' => ['required', 'image', 'max:5120'],
+            'loading_photos.*' => ['required', 'image', 'max:15360'],
         ], [
             'loading_photos.required' => 'Unggah 1 atau 2 foto saat pengangkutan sebelum mengirim SPB.',
             'loading_photos.min' => 'Unggah minimal 1 foto pengangkutan SPB.',
@@ -218,14 +242,24 @@ class DeliveryOrderController extends Controller
             /** @var list<UploadedFile> $uploadedFiles */
             $uploadedFiles = $request->file('loading_photos', []);
             foreach ($uploadedFiles as $file) {
-                $storedPath = $file->store('spb-loading-photos', 'public');
-                if ($storedPath !== false) {
-                    $photoPaths[] = $storedPath;
-                }
+                $photoPaths[] = $this->imageCompressionService->storeCompressedImage($file, 'spb-loading-photos');
             }
         }
 
         $order = $this->loadingService->dispatchDeliveryOrder($deliveryOrder, null, $photoPaths);
+
+        $actor = $request->user();
+        $actorName = $actor instanceof User ? $actor->name : 'Pengguna';
+
+        $this->auditLogger->log(
+            category: 'spb',
+            action: 'dispatched',
+            humanMessage: "{$actorName} mengirim Surat Jalan {$order->spb_number} menuju PKS ({$order->total_sacks_loaded} karung).",
+            severity: 'normal',
+            subject: $order,
+            actor: $actor instanceof User ? $actor : null,
+            fallbackActorName: $actorName,
+        );
 
         return redirect()
             ->back()

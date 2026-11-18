@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import {
     IconAiSpark,
+    IconDailyRecap,
     IconDashboard,
     IconHarvestScale,
     IconMasterGrid,
     IconMillWeigh,
+    IconShieldMonitor,
     IconTruckRoute,
     IconUsers,
 } from '@/components/ekulap/DuotoneIcons';
@@ -23,6 +25,8 @@ export function buildSidebarNavItems(
 ): NavItem[] {
     const isKerani = userRole === 'Kerani Produksi';
     const isAdmin = userRole === 'Admin';
+    const canSeeMonitor =
+        userRole === 'Admin' || userRole === 'Pimpinan (EM/RC)';
     const canSeeMaster =
         userRole === 'Admin' ||
         userRole === 'Supervisi/Asisten' ||
@@ -62,12 +66,20 @@ export function buildSidebarNavItems(
     );
 
     if (!isKerani) {
-        items.push({
-            label: 'Asisten AI Sawit',
-            href: '/ai-assistant',
-            matchPrefix: '/ai-assistant',
-            icon: <IconAiSpark className="size-5 shrink-0" />,
-        });
+        items.push(
+            {
+                label: 'Rekapan Kutip Lapis',
+                href: '/rekapan-kutip-lapis',
+                matchPrefix: '/rekapan-kutip-lapis',
+                icon: <IconDailyRecap className="size-5 shrink-0" />,
+            },
+            {
+                label: 'Asisten AI Sawit',
+                href: '/ai-assistant',
+                matchPrefix: '/ai-assistant',
+                icon: <IconAiSpark className="size-5 shrink-0" />,
+            },
+        );
     }
 
     if (canSeeMaster) {
@@ -85,6 +97,15 @@ export function buildSidebarNavItems(
             href: '/users',
             matchPrefix: '/users',
             icon: <IconUsers className="size-5 shrink-0" />,
+        });
+    }
+
+    if (canSeeMonitor) {
+        items.push({
+            label: 'Monitor Sistem',
+            href: '/system-monitor',
+            matchPrefix: '/system-monitor',
+            icon: <IconShieldMonitor className="size-5 shrink-0" />,
         });
     }
 

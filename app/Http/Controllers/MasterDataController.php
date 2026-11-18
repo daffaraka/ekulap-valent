@@ -9,7 +9,9 @@ use App\Models\Division;
 use App\Models\PksMill;
 use App\Models\TphPoint;
 use App\Models\Truck;
+use App\Models\User;
 use App\Models\Worker;
+use App\Services\AuditLoggerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,6 +20,10 @@ use Inertia\Response;
 
 class MasterDataController extends Controller
 {
+    public function __construct(
+        private readonly AuditLoggerService $auditLogger,
+    ) {}
+
     public function index(Request $request): Response
     {
         return Inertia::render('master-data/MasterDataIndex', [
@@ -40,7 +46,8 @@ class MasterDataController extends Controller
             'name' => ['required', 'string', 'max:150'],
         ]);
 
-        Division::create($validated);
+        $division = Division::create($validated);
+        $this->recordMasterAudit('created', "menambahkan master Divisi {$division->code} ({$division->name}).");
 
         return redirect()->route('master-data.index', ['tab' => 'divisions'])
             ->with('success', "Divisi {$validated['code']} berhasil ditambahkan.");
@@ -48,7 +55,9 @@ class MasterDataController extends Controller
 
     public function destroyDivision(Division $division): RedirectResponse
     {
+        $code = $division->code;
         $division->delete();
+        $this->recordMasterAudit('deleted', "menghapus master Divisi {$code}.", 'warning');
 
         return redirect()->route('master-data.index', ['tab' => 'divisions'])
             ->with('success', 'Divisi berhasil dihapus.');
@@ -62,7 +71,8 @@ class MasterDataController extends Controller
             'planting_year' => ['required', 'integer', 'min:1980', 'max:2035'],
         ]);
 
-        Block::create($validated);
+        $block = Block::create($validated);
+        $this->recordMasterAudit('created', "menambahkan master Blok {$block->code} (tahun tanam {$block->planting_year}).");
 
         return redirect()->route('master-data.index', ['tab' => 'blocks'])
             ->with('success', "Blok {$validated['code']} berhasil ditambahkan.");
@@ -70,7 +80,9 @@ class MasterDataController extends Controller
 
     public function destroyBlock(Block $block): RedirectResponse
     {
+        $code = $block->code;
         $block->delete();
+        $this->recordMasterAudit('deleted', "menghapus master Blok {$code}.", 'warning');
 
         return redirect()->route('master-data.index', ['tab' => 'blocks'])
             ->with('success', 'Blok berhasil dihapus.');
@@ -86,7 +98,8 @@ class MasterDataController extends Controller
             'longitude' => ['required', 'numeric', 'between:-180,180'],
         ]);
 
-        TphPoint::create($validated);
+        $tph = TphPoint::create($validated);
+        $this->recordMasterAudit('created', "menambahkan master Titik TPH {$tph->code} ({$tph->location_label}).");
 
         return redirect()->route('master-data.index', ['tab' => 'tph'])
             ->with('success', "Titik TPH {$validated['code']} berhasil dikunci.");
@@ -94,7 +107,9 @@ class MasterDataController extends Controller
 
     public function destroyTphPoint(TphPoint $tphPoint): RedirectResponse
     {
+        $code = $tphPoint->code;
         $tphPoint->delete();
+        $this->recordMasterAudit('deleted', "menghapus master Titik TPH {$code}.", 'warning');
 
         return redirect()->route('master-data.index', ['tab' => 'tph'])
             ->with('success', 'Titik TPH berhasil dihapus.');
@@ -110,7 +125,8 @@ class MasterDataController extends Controller
             'status' => ['required', Rule::in(RecordStatus::values())],
         ]);
 
-        Worker::create($validated);
+        $worker = Worker::create($validated);
+        $this->recordMasterAudit('created', "mendaftarkan tenaga kerja {$worker->name} ({$worker->worker_code} · {$worker->job_type->value}).");
 
         return redirect()->route('master-data.index', ['tab' => 'workers'])
             ->with('success', "Tenaga kerja {$validated['name']} berhasil didaftarkan.");
@@ -123,6 +139,7 @@ class MasterDataController extends Controller
                 ? RecordStatus::Nonaktif
                 : RecordStatus::Aktif,
         ]);
+        $this->recordMasterAudit('toggled', "mengubah status tenaga kerja {$worker->name} menjadi {$worker->status->value}.", 'warning');
 
         return redirect()->route('master-data.index', ['tab' => 'workers'])
             ->with('success', "Status pekerja {$worker->name} diperbarui.");
@@ -137,7 +154,8 @@ class MasterDataController extends Controller
             'capacity_kg' => ['required', 'integer', 'min:500', 'max:50000'],
         ]);
 
-        Truck::create($validated);
+        $truck = Truck::create($validated);
+        $this->recordMasterAudit('created', "menambahkan armada truk {$truck->plate_number} (supir {$truck->driver_name}).");
 
         return redirect()->route('master-data.index', ['tab' => 'trucks'])
             ->with('success', "Armada truk {$validated['plate_number']} berhasil ditambahkan.");
@@ -145,7 +163,9 @@ class MasterDataController extends Controller
 
     public function destroyTruck(Truck $truck): RedirectResponse
     {
+        $plate = $truck->plate_number;
         $truck->delete();
+        $this->recordMasterAudit('deleted', "menghapus master armada truk {$plate}.", 'warning');
 
         return redirect()->route('master-data.index', ['tab' => 'trucks'])
             ->with('success', 'Data truk berhasil dihapus.');
@@ -158,7 +178,8 @@ class MasterDataController extends Controller
             'name' => ['required', 'string', 'max:150'],
         ]);
 
-        PksMill::create($validated);
+        $mill = PksMill::create($validated);
+        $this->recordMasterAudit('created', "menambahkan master Pabrik PKS {$mill->code} ({$mill->name}).");
 
         return redirect()->route('master-data.index', ['tab' => 'pks'])
             ->with('success', "Pabrik {$validated['name']} berhasil ditambahkan.");
@@ -166,9 +187,26 @@ class MasterDataController extends Controller
 
     public function destroyPksMill(PksMill $pksMill): RedirectResponse
     {
+        $name = $pksMill->name;
         $pksMill->delete();
+        $this->recordMasterAudit('deleted', "menghapus master Pabrik PKS {$name}.", 'warning');
 
         return redirect()->route('master-data.index', ['tab' => 'pks'])
             ->with('success', 'Pabrik PKS berhasil dihapus.');
+    }
+
+    private function recordMasterAudit(string $action, string $phrase, string $severity = 'normal'): void
+    {
+        $actor = request()->user();
+        $actorName = $actor instanceof User ? $actor->name : 'Admin';
+
+        $this->auditLogger->log(
+            category: 'master',
+            action: $action,
+            humanMessage: "{$actorName} {$phrase}",
+            severity: $severity,
+            actor: $actor instanceof User ? $actor : null,
+            fallbackActorName: $actorName,
+        );
     }
 }

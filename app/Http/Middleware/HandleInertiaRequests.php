@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name', 'eKULAP'),
+            'isDevelopment' => app()->environment(['local', 'development']),
             'auth' => [
                 'user' => $user,
             ],

@@ -12,7 +12,9 @@ use App\Models\TphHarvestRecord;
 use App\Models\TphPoint;
 use App\Models\User;
 use App\Models\Worker;
+use App\Services\AuditLoggerService;
 use App\Services\HarvestLoadingService;
+use App\Services\ImageCompressionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -23,6 +25,8 @@ class TphHarvestController extends Controller
 {
     public function __construct(
         private readonly HarvestLoadingService $loadingService,
+        private readonly ImageCompressionService $imageCompressionService,
+        private readonly AuditLoggerService $auditLogger,
     ) {}
 
     public function index(Request $request): Response
@@ -88,14 +92,20 @@ class TphHarvestController extends Controller
         /** @var list<UploadedFile> $uploadedFiles */
         $uploadedFiles = $request->file('photos', []);
         foreach ($uploadedFiles as $file) {
-            $storedPath = $file->store('harvest-photos', 'public');
-            if ($storedPath !== false) {
-                $photoPaths[] = $storedPath;
-            }
+            $photoPaths[] = $this->imageCompressionService->storeCompressedImage($file, 'harvest-photos');
         }
         $validated['photo_paths'] = $photoPaths;
 
         $record = $this->loadingService->createHarvestRecord($validated, $user);
+
+        $this->auditLogger->log(
+            category: 'harvest',
+            action: 'created',
+            humanMessage: "{$user->name} mencatat Timbang TPH {$record->lot_number} ({$record->harvest_type->value} · {$record->sack_count} karung · {$record->net_weight_kg} kg).",
+            severity: 'normal',
+            subject: $record,
+            actor: $user,
+        );
 
         return redirect()
             ->route('tph-harvest.index')
@@ -111,7 +121,20 @@ class TphHarvestController extends Controller
         }
 
         $lot = $tphHarvest->lot_number;
+        $sacks = $tphHarvest->sack_count;
         $tphHarvest->delete();
+
+        $actor = request()->user();
+        $actorName = $actor instanceof User ? $actor->name : 'Pengguna';
+
+        $this->auditLogger->log(
+            category: 'harvest',
+            action: 'deleted',
+            humanMessage: "{$actorName} menghapus catatan Timbang TPH {$lot} ({$sacks} karung).",
+            severity: 'warning',
+            actor: $actor instanceof User ? $actor : null,
+            fallbackActorName: $actorName,
+        );
 
         return redirect()
             ->route('tph-harvest.index')

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -44,5 +45,25 @@ class DashboardTest extends TestCase
 
         $this->postJson(route('ai-assistant.ask'), ['question' => 'Tes'])
             ->assertUnauthorized();
+    }
+
+    public function test_dashboard_shares_development_environment_flag_for_header_theming(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        app()->detectEnvironment(fn (): string => 'local');
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('isDevelopment', true)
+            );
+
+        app()->detectEnvironment(fn (): string => 'production');
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('isDevelopment', false)
+            );
     }
 }

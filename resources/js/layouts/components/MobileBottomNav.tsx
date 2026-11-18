@@ -65,7 +65,7 @@ export function MobileBottomNav({
           ];
 
     return (
-        <nav className="no-print fixed inset-x-0 bottom-0 z-30 flex border-t border-[#102B26]/12 bg-[#102B26] px-1 py-1.5 text-[#98A4A0] md:hidden">
+        <nav className="no-print fixed inset-x-0 bottom-0 z-30 flex border-t border-[#4A3408] bg-[#5D420B] px-1 py-1.5 text-[#EDE4D3]/85 md:hidden">
             {tabs.map((tab) => {
                 const active =
                     (tab.href === '/dashboard' &&
@@ -80,8 +80,8 @@ export function MobileBottomNav({
                         href={tab.href}
                         className={`flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[11px] font-medium transition ${
                             active
-                                ? 'bg-white font-semibold text-[#102B26] shadow-sm'
-                                : 'text-[#98A4A0] hover:text-[#F6F8F6]'
+                                ? 'bg-white font-semibold text-[#5D420B] shadow-sm'
+                                : 'text-[#EDE4D3]/80 hover:text-white'
                         }`}
                     >
                         {tab.icon}
