@@ -104,6 +104,15 @@ class TphHarvestRecord extends Model
     }
 
     /**
+     * @return BelongsToMany<Block, $this>
+     */
+    public function blocks(): BelongsToMany
+    {
+        return $this->belongsToMany(Block::class, 'tph_harvest_record_block')
+            ->withTimestamps();
+    }
+
+    /**
      * @return BelongsTo<TphPoint, $this>
      */
     public function tphPoint(): BelongsTo
@@ -155,5 +164,65 @@ class TphHarvestRecord extends Model
     public function remainingSacks(): int
     {
         return max(0, $this->sack_count - $this->loaded_sack_count);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function resolvedWorkerNamesList(): array
+    {
+        $names = array_values(
+            $this->workers
+                ->pluck('name')
+                ->filter(static fn (mixed $name): bool => is_string($name) && trim($name) !== '')
+                ->unique()
+                ->all(),
+        );
+
+        if ($names !== []) {
+            return $names;
+        }
+
+        $fallback = $this->worker->name;
+
+        return trim($fallback) !== '' ? [$fallback] : [];
+    }
+
+    public function resolvedWeigherName(): string
+    {
+        if ($this->weigher_user_id !== null && $this->weigher !== null) {
+            return $this->weigher->name;
+        }
+
+        return $this->recorder->name;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function resolvedBlockCodesList(): array
+    {
+        $codes = array_values(
+            $this->blocks
+                ->pluck('code')
+                ->filter(static fn (mixed $code): bool => is_string($code) && trim($code) !== '')
+                ->unique()
+                ->all(),
+        );
+
+        if ($codes !== []) {
+            return $codes;
+        }
+
+        $fallback = $this->block->code;
+
+        return trim($fallback) !== '' ? [$fallback] : [];
+    }
+
+    public function formattedBlockCodes(): string
+    {
+        $codes = $this->resolvedBlockCodesList();
+
+        return $codes !== [] ? implode(', ', $codes) : '-';
     }
 }

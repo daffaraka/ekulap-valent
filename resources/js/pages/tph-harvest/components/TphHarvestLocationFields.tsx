@@ -1,4 +1,5 @@
 import { DatePickerInput } from '@/components/ekulap/DatePickerInput';
+import { SearchableMultiSelect } from '@/components/ekulap/SearchableMultiSelect';
 import { SearchableSelect } from '@/components/ekulap/SearchableSelect';
 import InputError from '@/components/input-error';
 import { TphHarvestGpsFields } from '@/pages/tph-harvest/components/TphHarvestGpsFields';
@@ -7,7 +8,7 @@ import type { Block, TphPoint, WeigherOption } from '@/types';
 type TphHarvestLocationFieldsProps = {
     workDate: string;
     harvestType: string;
-    blockId: string;
+    blockIds: number[];
     tphPointId: string;
     weigherUserId: string;
     sackCount: string;
@@ -21,14 +22,14 @@ type TphHarvestLocationFieldsProps = {
     harvestTypes: string[];
     errors: Record<string, string | undefined>;
     onChangeField: (field: string, value: string) => void;
-    onBlockChange: (nextBlockId: string) => void;
+    onBlocksChange: (nextBlockIds: number[]) => void;
     onFillMasterGps: () => void;
 };
 
 export function TphHarvestLocationFields({
     workDate,
     harvestType,
-    blockId,
+    blockIds,
     tphPointId,
     weigherUserId,
     sackCount,
@@ -42,7 +43,7 @@ export function TphHarvestLocationFields({
     harvestTypes,
     errors,
     onChangeField,
-    onBlockChange,
+    onBlocksChange,
     onFillMasterGps,
 }: TphHarvestLocationFieldsProps) {
     return (
@@ -83,14 +84,17 @@ export function TphHarvestLocationFields({
             <div className="grid gap-3 sm:grid-cols-3">
                 <div>
                     <label className="mb-1 block text-xs font-semibold">
-                        Blok
+                        Blok (Bisa pilih lebih dari 1)
                     </label>
-                    <SearchableSelect
-                        value={blockId}
-                        onChange={onBlockChange}
-                        placeholder="Pilih blok..."
+                    <SearchableMultiSelect
+                        values={blockIds.map(String)}
+                        onChange={(nextValues) =>
+                            onBlocksChange(nextValues.map(Number))
+                        }
+                        placeholder="Pilih minimal 1 blok..."
                         searchPlaceholder="Cari kode blok..."
                         emptyText="Blok tidak ditemukan."
+                        itemPluralLabel="Blok dipilih"
                         options={blocks.map((block) => ({
                             value: String(block.id),
                             label: `Blok ${block.code}`,
@@ -100,7 +104,7 @@ export function TphHarvestLocationFields({
                             searchText: `${block.code} Blok ${block.code}`,
                         }))}
                     />
-                    <InputError message={errors.block_id} />
+                    <InputError message={errors.block_ids ?? errors.block_id} />
                 </div>
                 <div>
                     <label className="mb-1 block text-xs font-semibold">

@@ -27,14 +27,14 @@ export function TphHarvestFormModal({
     onClose,
 }: TphHarvestFormModalProps) {
     const today = new Date().toISOString().slice(0, 10);
-    const firstBlockId = blocks[0] ? String(blocks[0].id) : '';
+    const firstBlockId = blocks[0] ? blocks[0].id : null;
     const firstBlockTph =
-        tphPoints.find((point) => String(point.block_id) === firstBlockId) ??
+        tphPoints.find((point) => point.block_id === firstBlockId) ??
         tphPoints[0];
 
     const { data, setData, post, processing, errors, reset } = useForm<{
         work_date: string;
-        block_id: string;
+        block_ids: number[];
         tph_point_id: string;
         worker_ids: number[];
         weigher_user_id: string;
@@ -47,7 +47,7 @@ export function TphHarvestFormModal({
         photos: File[];
     }>({
         work_date: today,
-        block_id: firstBlockId,
+        block_ids: firstBlockId !== null ? [firstBlockId] : [],
         tph_point_id: firstBlockTph ? String(firstBlockTph.id) : '',
         worker_ids: workers[0] ? [workers[0].id] : [],
         weigher_user_id: String(defaultWeigherId),
@@ -64,21 +64,27 @@ export function TphHarvestFormModal({
         return null;
     }
 
-    const handleBlockChange = (nextBlockId: string): void => {
-        const matchingTph = tphPoints.find(
-            (point) => String(point.block_id) === nextBlockId,
-        );
-        const fallbackTph =
-            matchingTph ??
-            tphPoints.find((point) => String(point.id) === data.tph_point_id) ??
-            tphPoints[0];
-        setData({
-            ...data,
-            block_id: nextBlockId,
-            tph_point_id: fallbackTph ? String(fallbackTph.id) : '',
-            input_latitude: fallbackTph ? String(fallbackTph.latitude) : '',
-            input_longitude: fallbackTph ? String(fallbackTph.longitude) : '',
-        });
+    const handleBlocksChange = (nextBlockIds: number[]): void => {
+        const prevPrimaryId = data.block_ids[0] ?? null;
+        const nextPrimaryId = nextBlockIds[0] ?? null;
+
+        if (nextPrimaryId !== null && nextPrimaryId !== prevPrimaryId) {
+            const matchingTph = tphPoints.find(
+                (point) => point.block_id === nextPrimaryId,
+            );
+            if (matchingTph) {
+                setData({
+                    ...data,
+                    block_ids: nextBlockIds,
+                    tph_point_id: String(matchingTph.id),
+                    input_latitude: String(matchingTph.latitude),
+                    input_longitude: String(matchingTph.longitude),
+                });
+                return;
+            }
+        }
+
+        setData('block_ids', nextBlockIds);
     };
 
     const fillMasterGps = (): void => {
@@ -136,7 +142,7 @@ export function TphHarvestFormModal({
                     <TphHarvestLocationFields
                         workDate={data.work_date}
                         harvestType={data.harvest_type}
-                        blockId={data.block_id}
+                        blockIds={data.block_ids}
                         tphPointId={data.tph_point_id}
                         weigherUserId={data.weigher_user_id}
                         sackCount={data.sack_count}
@@ -152,7 +158,7 @@ export function TphHarvestFormModal({
                         onChangeField={(field, value) =>
                             setData(field as keyof typeof data, value)
                         }
-                        onBlockChange={handleBlockChange}
+                        onBlocksChange={handleBlocksChange}
                         onFillMasterGps={fillMasterGps}
                     />
 
@@ -184,7 +190,8 @@ export function TphHarvestFormModal({
                             disabled={
                                 processing ||
                                 data.photos.length < 3 ||
-                                data.worker_ids.length === 0
+                                data.worker_ids.length === 0 ||
+                                data.block_ids.length === 0
                             }
                             className="min-h-11 rounded-md bg-[#1C5143] px-5 text-xs font-bold text-white transition hover:bg-[#102B26] disabled:opacity-60"
                         >

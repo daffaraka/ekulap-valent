@@ -39,6 +39,8 @@ class DeliveryOrderController extends Controller
                 'truck',
                 'pksMill',
                 'loader',
+                'items.harvestRecord.block',
+                'items.harvestRecord.blocks',
                 'items.harvestRecord.tphPoint',
                 'items.harvestRecord.worker',
                 'items.harvestRecord.workers',
@@ -50,7 +52,7 @@ class DeliveryOrderController extends Controller
             ->withQueryString();
 
         $availableLots = TphHarvestRecord::query()
-            ->with(['division', 'block', 'tphPoint', 'worker', 'workers'])
+            ->with(['division', 'block', 'blocks', 'tphPoint', 'worker', 'workers'])
             ->whereIn('transport_status', [
                 TransportStatus::BelumDiangkut->value,
                 TransportStatus::DiangkutSebagian->value,
@@ -60,10 +62,7 @@ class DeliveryOrderController extends Controller
             ->get()
             ->map(function (TphHarvestRecord $record): array {
                 $remainingSacks = $record->remainingSacks();
-                $workerNames = $record->workers->pluck('name')->implode(', ');
-                if ($workerNames === '') {
-                    $workerNames = $record->worker->name;
-                }
+                $workerNames = implode(', ', $record->resolvedWorkerNamesList());
 
                 return [
                     'id' => $record->id,
@@ -71,9 +70,9 @@ class DeliveryOrderController extends Controller
                     'work_date' => $record->work_date->toDateString(),
                     'division_id' => $record->division_id,
                     'division_code' => $record->division->code,
-                    'block_code' => $record->block->code,
+                    'block_code' => $record->formattedBlockCodes(),
                     'tph_code' => $record->tphPoint->code,
-                    'worker_name' => $workerNames,
+                    'worker_name' => $workerNames !== '' ? $workerNames : '-',
                     'harvest_type' => $record->harvest_type->value,
                     'sack_count' => $record->sack_count,
                     'loaded_sack_count' => $record->loaded_sack_count,
@@ -146,13 +145,14 @@ class DeliveryOrderController extends Controller
             'pksMill',
             'loader',
             'items.harvestRecord.block',
+            'items.harvestRecord.blocks',
             'items.harvestRecord.tphPoint',
             'items.harvestRecord.worker',
             'items.harvestRecord.workers',
         ]);
 
         $availableLots = TphHarvestRecord::query()
-            ->with(['tphPoint', 'worker', 'workers'])
+            ->with(['block', 'blocks', 'tphPoint', 'worker', 'workers'])
             ->where('division_id', $deliveryOrder->division_id)
             ->whereIn('transport_status', [
                 TransportStatus::BelumDiangkut->value,
@@ -160,16 +160,14 @@ class DeliveryOrderController extends Controller
             ])
             ->get()
             ->map(function (TphHarvestRecord $r): array {
-                $workerNames = $r->workers->pluck('name')->implode(', ');
-                if ($workerNames === '') {
-                    $workerNames = $r->worker->name;
-                }
+                $workerNames = implode(', ', $r->resolvedWorkerNamesList());
 
                 return [
                     'id' => $r->id,
                     'lot_number' => $r->lot_number,
+                    'block_code' => $r->formattedBlockCodes(),
                     'tph_code' => $r->tphPoint->code,
-                    'worker_name' => $workerNames,
+                    'worker_name' => $workerNames !== '' ? $workerNames : '-',
                     'remaining_sacks' => $r->remainingSacks(),
                     'sack_count' => $r->sack_count,
                     'net_weight_kg' => $r->net_weight_kg,

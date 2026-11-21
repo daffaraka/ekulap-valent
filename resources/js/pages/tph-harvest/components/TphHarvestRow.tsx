@@ -36,6 +36,10 @@ export function TphHarvestRow({
         record.workers && record.workers.length > 0
             ? record.workers.map((w) => w.name).join(', ')
             : (record.worker?.name ?? '-');
+    const blockCodes =
+        record.blocks && record.blocks.length > 0
+            ? record.blocks.map((b) => b.code).join(', ')
+            : (record.block?.code ?? '-');
     const rowHighlight =
         getTphHarvestRowClass(record.transport_status) ||
         'hover:bg-[#E9EEE9]/35';
@@ -55,8 +59,7 @@ export function TphHarvestRow({
             </td>
             <td className="px-4 py-3">
                 <div className="font-bold text-[#1C5143]">
-                    Blok {record.block?.code ?? '-'} ·{' '}
-                    {record.tph_point?.code ?? '-'}
+                    Blok {blockCodes} · {record.tph_point?.code ?? '-'}
                 </div>
                 <div className="text-[11px] text-[#466059]">
                     {record.division?.code}

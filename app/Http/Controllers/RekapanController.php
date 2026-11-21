@@ -87,7 +87,9 @@ class RekapanController extends Controller
                 'Tanggal Kerja',
                 'Divisi',
                 'Blok',
-                'Jumlah Lot',
+                'Nama Pekerja',
+                'Penimbang',
+                'Jumlah Stasiun',
                 'Jumlah TPH',
                 'Total Karung',
                 'Total Berat (Kg)',
@@ -101,6 +103,8 @@ class RekapanController extends Controller
                     $row['work_date'],
                     implode(', ', $row['divisions']),
                     implode(', ', $row['blocks']),
+                    implode(', ', $row['workers']) ?: '-',
+                    implode(', ', $row['weighers']) ?: '-',
                     $row['lot_count'],
                     $row['tph_count'],
                     $row['total_sacks'],
@@ -134,7 +138,9 @@ class RekapanController extends Controller
                 'Lokasi',
                 'Divisi',
                 'Blok',
-                'Jumlah Lot Restan',
+                'Nama Pekerja',
+                'Penimbang',
+                'Jumlah Stasiun Restan',
                 'Total Restan (Karung)',
                 'Masih di TPH (Karung)',
                 'SPB Belum Muat (Karung)',
@@ -149,6 +155,8 @@ class RekapanController extends Controller
                     $row['location_label'],
                     implode(', ', $row['division_codes']),
                     implode(', ', $row['block_codes']),
+                    implode(', ', $row['worker_names'] ?? []) ?: '-',
+                    implode(', ', $row['weigher_names'] ?? []) ?: '-',
                     $row['lot_count'],
                     $row['restan_sacks'],
                     $row['unloaded_sacks'],
@@ -171,7 +179,7 @@ class RekapanController extends Controller
     private function buildFilteredQuery(string $dateFrom, string $dateTo, ?int $divisionId): Builder
     {
         return TphHarvestRecord::query()
-            ->with(['division', 'block', 'tphPoint', 'worker', 'workers', 'weigher', 'recorder', 'deliveryOrderItems.deliveryOrder'])
+            ->with(['division', 'block', 'blocks', 'tphPoint', 'worker', 'workers', 'weigher', 'recorder', 'deliveryOrderItems.deliveryOrder'])
             ->when($dateFrom !== '', fn ($q) => $q->whereDate('work_date', '>=', $dateFrom))
             ->when($dateTo !== '', fn ($q) => $q->whereDate('work_date', '<=', $dateTo))
             ->when($divisionId, fn ($q) => $q->where('division_id', $divisionId))
@@ -195,7 +203,7 @@ class RekapanController extends Controller
                     $loadedSacks = (int) $dayRecords->sum('loaded_sack_count');
 
                     $detailRecords = $dayRecords->map(function (TphHarvestRecord $record) use ($todayStart): array {
-                        $workerNames = $record->workers->pluck('name')->implode(', ');
+                        $workerNames = implode(', ', $record->resolvedWorkerNamesList());
                         $belumMuat = $this->restanService->belumMuatSpbSacksForRecord($record);
                         $restanSacks = min($record->sack_count, $record->remainingSacks() + $belumMuat);
                         $restanDays = $restanSacks > 0
@@ -206,11 +214,11 @@ class RekapanController extends Controller
                             'id' => $record->id,
                             'lot_number' => $record->lot_number,
                             'division_code' => $record->division->code,
-                            'block_code' => $record->block->code,
+                            'block_code' => $record->formattedBlockCodes(),
                             'tph_code' => $record->tphPoint->code,
                             'harvest_type' => $record->harvest_type->value,
-                            'worker_names' => $workerNames !== '' ? $workerNames : $record->worker->name,
-                            'weigher_name' => $record->weigher_user_id !== null ? $record->weigher->name : $record->recorder->name,
+                            'worker_names' => $workerNames !== '' ? $workerNames : '-',
+                            'weigher_name' => $record->resolvedWeigherName(),
                             'sack_count' => $record->sack_count,
                             'tph_count' => $record->tph_count,
                             'net_weight_kg' => $record->net_weight_kg,
@@ -227,6 +235,25 @@ class RekapanController extends Controller
                         ? $this->restanService->restanDaysForDate($firstRecord->work_date, $todayStart)
                         : 0;
 
+                    $workers = $dayRecords
+                        ->flatMap(static fn (TphHarvestRecord $record): array => $record->resolvedWorkerNamesList())
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    $weighers = $dayRecords
+                        ->map(static fn (TphHarvestRecord $record): string => $record->resolvedWeigherName())
+                        ->filter(static fn (string $name): bool => $name !== '' && $name !== '-')
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    $blocks = $dayRecords
+                        ->flatMap(static fn (TphHarvestRecord $record): array => $record->resolvedBlockCodesList())
+                        ->unique()
+                        ->values()
+                        ->all();
+
                     return [
                         'work_date' => $workDate,
                         'lot_count' => $dayRecords->count(),
@@ -237,7 +264,9 @@ class RekapanController extends Controller
                         'remaining_sacks' => $remainingSacks,
                         'restan_days' => $dayRestanDays,
                         'divisions' => $dayRecords->pluck('division.code')->unique()->values()->all(),
-                        'blocks' => $dayRecords->pluck('block.code')->unique()->values()->all(),
+                        'blocks' => $blocks,
+                        'workers' => $workers,
+                        'weighers' => $weighers,
                         'records' => $detailRecords,
                     ];
                 })

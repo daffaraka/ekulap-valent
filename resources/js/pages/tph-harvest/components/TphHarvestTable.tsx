@@ -21,6 +21,11 @@ const getWorkerNames = (record: TphHarvestRecord): string =>
         ? record.workers.map((w) => w.name).join(', ')
         : (record.worker?.name ?? '-');
 
+const getBlockCodes = (record: TphHarvestRecord): string =>
+    record.blocks && record.blocks.length > 0
+        ? record.blocks.map((b) => b.code).join(', ')
+        : (record.block?.code ?? '-');
+
 const getPhotoCount = (record: TphHarvestRecord): number =>
     record.photo_paths && record.photo_paths.length > 0
         ? record.photo_paths.length
@@ -114,7 +119,7 @@ function buildTphHarvestColumns(
     const columns: DataTableColumn<TphHarvestRecord>[] = [
         {
             key: 'lot',
-            header: 'No. Lot & Tgl',
+            header: 'No. Stasiun & Tgl',
             sortValue: (r) => `${r.work_date} ${r.lot_number}`,
             render: (r) => (
                 <>
@@ -133,12 +138,11 @@ function buildTphHarvestColumns(
         {
             key: 'location',
             header: 'Divisi / Blok / TPH',
-            sortValue: (r) =>
-                `${r.block?.code ?? ''} ${r.tph_point?.code ?? ''}`,
+            sortValue: (r) => `${getBlockCodes(r)} ${r.tph_point?.code ?? ''}`,
             render: (r) => (
                 <>
                     <div className="font-bold text-[#1C5143]">
-                        Blok {r.block?.code ?? '-'} · {r.tph_point?.code ?? '-'}
+                        Blok {getBlockCodes(r)} · {r.tph_point?.code ?? '-'}
                     </div>
                     <div className="text-[11px] text-[#466059]">
                         {r.division?.code}
@@ -240,9 +244,9 @@ export function TphHarvestTable({ records, canDelete }: TphHarvestTableProps) {
                 getRowKey={(r) => r.id}
                 rowClassName={(r) => getTphHarvestRowClass(r.transport_status)}
                 searchableText={(r) =>
-                    `${r.lot_number} ${r.block?.code ?? ''} ${r.tph_point?.code ?? ''} ${getWorkerNames(r)} ${r.transport_status}`
+                    `${r.lot_number} ${getBlockCodes(r)} ${r.tph_point?.code ?? ''} ${getWorkerNames(r)} ${r.transport_status}`
                 }
-                searchPlaceholder="Cari lot / blok / TPH / pekerja..."
+                searchPlaceholder="Cari stasiun / blok / TPH / pekerja..."
                 emptyMessage="Belum ada catatan Timbang TPH."
                 serverPagination={{
                     current_page: records.current_page,

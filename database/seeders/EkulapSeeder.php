@@ -226,6 +226,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::SudahMasukPks,
             'loaded_sack_count' => 10,
         ]);
+        $lot1->blocks()->sync([$blockA12->id]);
         $lot1->workers()->sync([$suherman->id]);
 
         $lot2 = TphHarvestRecord::create([
@@ -251,6 +252,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::SudahMasukPks,
             'loaded_sack_count' => 15,
         ]);
+        $lot2->blocks()->sync([$blockA12->id]);
         $lot2->workers()->sync([$joko->id, $slamet->id]);
 
         $lot3 = TphHarvestRecord::create([
@@ -276,6 +278,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::SudahMasukPks,
             'loaded_sack_count' => 20,
         ]);
+        $lot3->blocks()->sync([$blockC03->id]);
         $lot3->workers()->sync([$agus->id]);
 
         $lot4 = TphHarvestRecord::create([
@@ -301,6 +304,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::DiangkutSebagian,
             'loaded_sack_count' => 6,
         ]);
+        $lot4->blocks()->sync([$blockA12->id]);
         $lot4->workers()->sync([$suherman->id]);
 
         $lot5 = TphHarvestRecord::create([
@@ -326,6 +330,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::SudahDiangkut,
             'loaded_sack_count' => 14,
         ]);
+        $lot5->blocks()->sync([$blockB05->id]);
         $lot5->workers()->sync([$slamet->id]);
 
         $lot6 = TphHarvestRecord::create([
@@ -351,6 +356,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::BelumDiangkut,
             'loaded_sack_count' => 0,
         ]);
+        $lot6->blocks()->sync([$blockA14->id]);
         $lot6->workers()->sync([$suherman->id, $slamet->id]);
 
         $lot7 = TphHarvestRecord::create([
@@ -376,6 +382,7 @@ class EkulapSeeder extends Seeder
             'transport_status' => TransportStatus::BelumDiangkut,
             'loaded_sack_count' => 0,
         ]);
+        $lot7->blocks()->sync([$blockC03->id]);
         $lot7->workers()->sync([$rahmat->id]);
 
         $spb1 = DeliveryOrder::create([

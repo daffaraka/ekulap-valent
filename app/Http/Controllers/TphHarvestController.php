@@ -36,10 +36,12 @@ class TphHarvestController extends Controller
         $divisionId = $request->integer('division_id') ?: null;
 
         $records = TphHarvestRecord::query()
-            ->with(['division', 'block', 'tphPoint', 'worker', 'workers', 'recorder', 'weigher'])
+            ->with(['division', 'block', 'blocks', 'tphPoint', 'worker', 'workers', 'recorder', 'weigher'])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($sub) use ($search): void {
                     $sub->where('lot_number', 'like', "%{$search}%")
+                        ->orWhereHas('block', fn ($b) => $b->where('code', 'like', "%{$search}%"))
+                        ->orWhereHas('blocks', fn ($b) => $b->where('code', 'like', "%{$search}%"))
                         ->orWhereHas('worker', fn ($w) => $w->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('workers', fn ($w) => $w->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('tphPoint', fn ($t) => $t->where('code', 'like', "%{$search}%"));
@@ -117,7 +119,7 @@ class TphHarvestController extends Controller
         if ($tphHarvest->loaded_sack_count > 0) {
             return redirect()
                 ->back()
-                ->with('error', "Lot {$tphHarvest->lot_number} sudah dimuat ke Surat Jalan dan tidak dapat dihapus.");
+                ->with('error', "Stasiun {$tphHarvest->lot_number} sudah dimuat ke Surat Jalan dan tidak dapat dihapus.");
         }
 
         $lot = $tphHarvest->lot_number;
@@ -138,6 +140,6 @@ class TphHarvestController extends Controller
 
         return redirect()
             ->route('tph-harvest.index')
-            ->with('success', "Catatan lot {$lot} berhasil dihapus.");
+            ->with('success', "Catatan stasiun {$lot} berhasil dihapus.");
     }
 }

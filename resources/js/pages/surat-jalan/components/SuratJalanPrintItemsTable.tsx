@@ -15,6 +15,14 @@ function resolveItemWorkers(item: DeliveryOrderItem): string {
     return item.harvest_record?.worker?.name ?? '-';
 }
 
+function resolveItemBlocks(item: DeliveryOrderItem): string {
+    const blocks = item.harvest_record?.blocks;
+    if (blocks && blocks.length > 0) {
+        return blocks.map((b) => b.code).join(', ');
+    }
+    return item.harvest_record?.block?.code ?? '-';
+}
+
 export function SuratJalanPrintItemsTable({
     items,
     totalSacksLoaded,
@@ -29,7 +37,7 @@ export function SuratJalanPrintItemsTable({
                 <thead className="border-b border-[#102B26]/12 bg-[#E9EEE9]/70 text-[#5A6C68]">
                     <tr>
                         <th className="px-3 py-2.5 font-semibold">
-                            Nomor Lot TPH
+                            Nomor Stasiun TPH
                         </th>
                         <th className="px-3 py-2.5 font-semibold">
                             Titik TPH &amp; Blok
@@ -56,7 +64,7 @@ export function SuratJalanPrintItemsTable({
                             </td>
                             <td className="px-3 py-2.5">
                                 {item.harvest_record?.tph_point?.code ?? '-'}{' '}
-                                (Blok {item.harvest_record?.block?.code ?? '-'})
+                                (Blok {resolveItemBlocks(item)})
                             </td>
                             <td className="px-3 py-2.5">
                                 {resolveItemWorkers(item)}

@@ -65,7 +65,7 @@ class DashboardController extends Controller
             ->count();
 
         $recentHarvests = (clone $harvestBase)
-            ->with(['division', 'block', 'tphPoint', 'worker', 'workers', 'recorder', 'weigher'])
+            ->with(['division', 'block', 'blocks', 'tphPoint', 'worker', 'workers', 'recorder', 'weigher'])
             ->orderByDesc('weighed_at')
             ->limit(6)
             ->get();

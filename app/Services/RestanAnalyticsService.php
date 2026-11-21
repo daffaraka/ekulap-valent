@@ -41,9 +41,12 @@ class RestanAnalyticsService
             ->with([
                 'division',
                 'block',
+                'blocks',
                 'tphPoint',
                 'worker',
                 'workers',
+                'weigher',
+                'recorder',
                 'deliveryOrderItems.deliveryOrder',
             ])
             ->when($divisionId, fn ($q) => $q->where('division_id', $divisionId))
@@ -77,22 +80,25 @@ class RestanAnalyticsService
             $ratio = $record->sack_count > 0 ? ($restanSacks / $record->sack_count) : 0.0;
             $restanNetKg = round($record->net_weight_kg * $ratio, 2);
 
-            $workerNames = $record->workers->pluck('name')->implode(', ');
-            if ($workerNames === '') {
-                $workerNames = $record->worker->name;
-            }
+            $blockCodesList = $record->resolvedBlockCodesList();
+            $workerNamesList = $record->resolvedWorkerNamesList();
+            $workerNames = implode(', ', $workerNamesList);
+            $weigherName = $record->resolvedWeigherName();
 
             $pendingLots[] = [
                 'id' => $record->id,
                 'lot_number' => $record->lot_number,
                 'work_date' => $record->work_date->toDateString(),
                 'division_code' => $record->division->code,
-                'block_code' => $record->block->code,
+                'block_code' => $record->formattedBlockCodes(),
+                'block_codes_list' => $blockCodesList,
                 'tph_point_id' => $record->tph_point_id,
                 'tph_code' => $record->tphPoint->code,
                 'location_label' => $record->tphPoint->location_label,
                 'harvest_type' => $record->harvest_type->value,
-                'worker_names' => $workerNames,
+                'worker_names' => $workerNames !== '' ? $workerNames : '-',
+                'worker_names_list' => $workerNamesList,
+                'weigher_name' => $weigherName,
                 'sack_count' => $record->sack_count,
                 'unloaded_sacks' => $unloadedSacks,
                 'belum_muat_sacks' => $belumMuatSacks,
@@ -162,8 +168,34 @@ class RestanAnalyticsService
                     ->values()
                     ->all();
 
+                $blockCodes = $lots
+                    ->flatMap(static fn (array $item): array => is_array($item['block_codes_list'] ?? null) ? $item['block_codes_list'] : [])
+                    ->filter(static fn (mixed $code): bool => is_string($code) && trim($code) !== '')
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $workerNames = $lots
+                    ->flatMap(static fn (array $item): array => is_array($item['worker_names_list'] ?? null) ? $item['worker_names_list'] : [])
+                    ->filter(static fn (mixed $name): bool => is_string($name) && trim($name) !== '')
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $weigherNames = $lots
+                    ->pluck('weigher_name')
+                    ->filter(static fn (mixed $name): bool => is_string($name) && trim($name) !== '' && $name !== '-')
+                    ->unique()
+                    ->values()
+                    ->all();
+
                 $sortedLots = $lots
                     ->sortByDesc('restan_days')
+                    ->map(static function (array $item): array {
+                        unset($item['worker_names_list'], $item['block_codes_list']);
+
+                        return $item;
+                    })
                     ->values()
                     ->all();
 
@@ -172,7 +204,9 @@ class RestanAnalyticsService
                     'tph_code' => (string) ($first['tph_code'] ?? '-'),
                     'location_label' => (string) ($first['location_label'] ?? '-'),
                     'division_codes' => $lots->pluck('division_code')->unique()->values()->all(),
-                    'block_codes' => $lots->pluck('block_code')->unique()->values()->all(),
+                    'block_codes' => $blockCodes,
+                    'worker_names' => $workerNames,
+                    'weigher_names' => $weigherNames,
                     'lot_count' => $lots->count(),
                     'restan_sacks' => (int) $lots->sum('restan_sacks'),
                     'unloaded_sacks' => (int) $lots->sum('unloaded_sacks'),

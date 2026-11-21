@@ -13,6 +13,15 @@ class StoreTphHarvestRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('block_ids') && $this->filled('block_id')) {
+            $this->merge([
+                'block_ids' => [(int) $this->input('block_id')],
+            ]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -20,7 +29,8 @@ class StoreTphHarvestRequest extends FormRequest
     {
         return [
             'work_date' => ['required', 'date'],
-            'block_id' => ['required', 'integer', 'exists:blocks,id'],
+            'block_ids' => ['required', 'array', 'min:1'],
+            'block_ids.*' => ['required', 'integer', 'exists:blocks,id'],
             'tph_point_id' => ['required', 'integer', 'exists:tph_points,id'],
             'worker_ids' => ['required', 'array', 'min:1'],
             'worker_ids.*' => ['required', 'integer', 'exists:workers,id'],
@@ -46,7 +56,8 @@ class StoreTphHarvestRequest extends FormRequest
             'worker_ids.required' => 'Pilih minimal 1 tenaga kerja.',
             'worker_ids.min' => 'Pilih minimal 1 tenaga kerja.',
             'weigher_user_id.required' => 'Pilih petugas timbang.',
-            'block_id.required' => 'Pilih blok panen.',
+            'block_ids.required' => 'Pilih minimal 1 blok panen.',
+            'block_ids.min' => 'Pilih minimal 1 blok panen.',
             'tph_count.required' => 'Jumlah TPH wajib diisi.',
             'tph_count.min' => 'Jumlah TPH minimal 1.',
             'photos.required' => 'Unggah minimal 3 foto bukti lapangan (maksimal 10 foto).',

@@ -291,7 +291,11 @@ class EkulapWorkflowTest extends TestCase
         // Admin dapat ekspor CSV
         $export = $this->actingAs($admin)->get(route('pks-reconciliation.export'));
         $export->assertOk();
-        $this->assertStringContainsString('SPB-20261115-001', $export->streamedContent());
+        $pksCsvContent = $export->streamedContent();
+        $this->assertStringContainsString('SPB-20261115-001', $pksCsvContent);
+        $this->assertStringContainsString('Nama Pekerja', $pksCsvContent);
+        $this->assertStringContainsString('Penimbang', $pksCsvContent);
+        $this->assertStringContainsString('Suherman', $pksCsvContent);
 
         // Laravel AI SDK Agent fake test
         EkulapAnalystAgent::fake([
@@ -509,14 +513,24 @@ class EkulapWorkflowTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('rekapan/RekapanIndex')
-                ->has('dailyRows')
+                ->has('dailyRows.0.workers')
+                ->has('dailyRows.0.weighers')
                 ->has('totals.days_count')
                 ->where('totals.total_sacks', (int) TphHarvestRecord::query()->sum('sack_count'))
+                ->where('dailyRows.0.workers', fn ($workers) => collect($workers)->contains($worker->name))
+                ->where('dailyRows.0.weighers', fn ($weighers) => collect($weighers)->contains($kerani->name))
             );
 
         $csvResponse = $this->actingAs($admin)->get(route('rekapan.export'));
         $csvResponse->assertOk();
-        $this->assertStringContainsString($today, $csvResponse->streamedContent());
+        $dailyCsv = $csvResponse->streamedContent();
+        $this->assertStringContainsString($today, $dailyCsv);
+        $this->assertStringContainsString('Nama Pekerja', $dailyCsv);
+        $this->assertStringContainsString('Penimbang', $dailyCsv);
+        $this->assertStringContainsString('Jumlah Stasiun', $dailyCsv);
+        $this->assertStringNotContainsString('Jumlah Lot', $dailyCsv);
+        $this->assertStringContainsString($worker->name, $dailyCsv);
+        $this->assertStringContainsString($kerani->name, $dailyCsv);
     }
 
     public function test_station_restan_recap_and_restan_age_calculations_handle_future_dates_and_spb_belum_muat(): void
@@ -556,13 +570,15 @@ class EkulapWorkflowTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('rekapan/RekapanIndex')
                 ->where('filters.tab', 'station')
-                ->has('stationRows')
+                ->has('stationRows.0.worker_names')
+                ->has('stationRows.0.weigher_names')
                 ->has('totals.max_restan_days')
-                ->where('stationRows', function ($rows) use ($futureLot): bool {
+                ->where('stationRows', function ($rows) use ($futureLot, $kerani): bool {
                     foreach ($rows as $row) {
                         foreach ($row['records'] as $lot) {
                             if ($lot['id'] === $futureLot->id) {
-                                return $lot['restan_days'] === 0;
+                                return $lot['restan_days'] === 0
+                                    && ($lot['weigher_name'] ?? null) === $kerani->name;
                             }
                         }
                     }
@@ -581,7 +597,105 @@ class EkulapWorkflowTest extends TestCase
 
         $stationCsv = $this->actingAs($admin)->get(route('rekapan.export', ['tab' => 'station']));
         $stationCsv->assertOk();
-        $this->assertStringContainsString('Stasiun TPH', $stationCsv->streamedContent());
-        $this->assertStringContainsString($tph->code, $stationCsv->streamedContent());
+        $stationCsvContent = $stationCsv->streamedContent();
+        $this->assertStringContainsString('Stasiun TPH', $stationCsvContent);
+        $this->assertStringContainsString('Nama Pekerja', $stationCsvContent);
+        $this->assertStringContainsString('Penimbang', $stationCsvContent);
+        $this->assertStringContainsString('Jumlah Stasiun Restan', $stationCsvContent);
+        $this->assertStringNotContainsString('Jumlah Lot Restan', $stationCsvContent);
+        $this->assertStringContainsString($tph->code, $stationCsvContent);
+        $this->assertStringContainsString($worker->name, $stationCsvContent);
+        $this->assertStringContainsString($kerani->name, $stationCsvContent);
+    }
+
+    public function test_multi_block_selection_persists_relationship_and_displays_across_modules_and_csv(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::query()->where('username', '10010001')->firstOrFail();
+        $kerani = User::query()->where('username', '10010003')->firstOrFail();
+        $blockA12 = Block::query()->where('code', 'A12')->firstOrFail();
+        $blockA14 = Block::query()->where('code', 'A14')->firstOrFail();
+        $tph = TphPoint::query()->where('code', 'TPH-A12-01')->firstOrFail();
+        $worker = Worker::query()->where('worker_code', 'PMN-014')->firstOrFail();
+        $workDate = now()->subDay()->toDateString();
+
+        // Validasi gagal jika block_ids kosong
+        $this->actingAs($kerani)->post(route('tph-harvest.store'), [
+            'work_date' => $workDate,
+            'block_ids' => [],
+            'tph_point_id' => $tph->id,
+            'worker_ids' => [$worker->id],
+            'weigher_user_id' => $kerani->id,
+            'harvest_type' => 'Kutip Lapis',
+            'sack_count' => 9,
+            'tph_count' => 2,
+            'gross_weight_kg' => 280,
+            'photos' => [
+                UploadedFile::fake()->image('mb1.jpg'),
+                UploadedFile::fake()->image('mb2.jpg'),
+                UploadedFile::fake()->image('mb3.jpg'),
+            ],
+        ])->assertSessionHasErrors('block_ids');
+
+        // Simpan catatan Timbang TPH dengan 2 blok sekaligus (A12 & A14)
+        $this->actingAs($kerani)->post(route('tph-harvest.store'), [
+            'work_date' => $workDate,
+            'block_ids' => [$blockA12->id, $blockA14->id],
+            'tph_point_id' => $tph->id,
+            'worker_ids' => [$worker->id],
+            'weigher_user_id' => $kerani->id,
+            'harvest_type' => 'Kutip Lapis',
+            'sack_count' => 9,
+            'tph_count' => 2,
+            'gross_weight_kg' => 280,
+            'input_latitude' => $tph->latitude,
+            'input_longitude' => $tph->longitude,
+            'photos' => [
+                UploadedFile::fake()->image('mb1.jpg'),
+                UploadedFile::fake()->image('mb2.jpg'),
+                UploadedFile::fake()->image('mb3.jpg'),
+            ],
+        ])->assertRedirect(route('tph-harvest.index'));
+
+        /** @var TphHarvestRecord $saved */
+        $saved = TphHarvestRecord::query()->with('blocks')->latest('id')->firstOrFail();
+        $this->assertSame($blockA12->id, $saved->block_id);
+        $this->assertCount(2, $saved->blocks);
+        $this->assertEqualsCanonicalizing(['A12', 'A14'], $saved->resolvedBlockCodesList());
+
+        // Pencarian berdasarkan kode blok kedua (A14) tetap menemukan record
+        $this->actingAs($admin)->get(route('tph-harvest.index', ['search' => 'A14']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('tph-harvest/TphHarvestIndex')
+                ->where('records.data', fn ($rows) => collect($rows)->contains(fn ($r) => $r['id'] === $saved->id))
+            );
+
+        // SPB availableLots menampilkan gabungan blok
+        $this->actingAs($admin)->get(route('surat-jalan.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('surat-jalan/SuratJalanIndex')
+                ->where('availableLots', fn ($lots) => collect($lots)->contains(
+                    fn ($lot) => $lot['id'] === $saved->id && str_contains((string) $lot['block_code'], 'A12') && str_contains((string) $lot['block_code'], 'A14'),
+                ))
+            );
+
+        // Rekapan harian & ekspor CSV harian memuat kedua blok
+        $dailyCsv = $this->actingAs($admin)
+            ->get(route('rekapan.export', ['date_from' => $workDate, 'date_to' => $workDate]))
+            ->assertOk()
+            ->streamedContent();
+        $this->assertStringContainsString('A12', $dailyCsv);
+        $this->assertStringContainsString('A14', $dailyCsv);
+
+        // Rekapan stasiun & ekspor CSV stasiun memuat kedua blok
+        $stationCsv = $this->actingAs($admin)
+            ->get(route('rekapan.export', ['tab' => 'station', 'date_from' => $workDate, 'date_to' => $workDate]))
+            ->assertOk()
+            ->streamedContent();
+        $this->assertStringContainsString('A12', $stationCsv);
+        $this->assertStringContainsString('A14', $stationCsv);
     }
 }

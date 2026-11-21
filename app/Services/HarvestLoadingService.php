@@ -29,9 +29,23 @@ class HarvestLoadingService
         /** @var TphPoint $tphPoint */
         $tphPoint = TphPoint::query()->findOrFail((int) $data['tph_point_id']);
 
-        $blockId = isset($data['block_id']) ? (int) $data['block_id'] : $tphPoint->block_id;
+        /** @var list<int> $blockIds */
+        $blockIds = array_values(array_unique(array_filter(
+            array_map(
+                static fn (mixed $id): int => (int) $id,
+                $data['block_ids'] ?? (isset($data['block_id']) ? [$data['block_id']] : [$tphPoint->block_id]),
+            ),
+            static fn (int $id): bool => $id > 0,
+        )));
+
+        if ($blockIds === []) {
+            throw ValidationException::withMessages([
+                'block_ids' => 'Pilih minimal 1 blok panen.',
+            ]);
+        }
+
         /** @var Block $block */
-        $block = Block::query()->findOrFail($blockId);
+        $block = Block::query()->findOrFail($blockIds[0]);
 
         $grossWeight = round((float) $data['gross_weight_kg'], 2);
         if ($grossWeight <= 0) {
@@ -80,6 +94,7 @@ class HarvestLoadingService
             $data,
             $tphPoint,
             $block,
+            $blockIds,
             $workerIds,
             $recorder,
             $weigherUserId,
@@ -116,9 +131,10 @@ class HarvestLoadingService
                 'loaded_sack_count' => 0,
             ]);
 
+            $record->blocks()->sync($blockIds);
             $record->workers()->sync($workerIds);
 
-            return $record->fresh(['division', 'block', 'tphPoint', 'worker', 'workers', 'recorder', 'weigher']) ?? $record;
+            return $record->fresh(['division', 'block', 'blocks', 'tphPoint', 'worker', 'workers', 'recorder', 'weigher']) ?? $record;
         });
     }
 
@@ -246,7 +262,7 @@ class HarvestLoadingService
     {
         if ($items === []) {
             throw ValidationException::withMessages([
-                'items' => 'Pilih minimal satu lot catatan timbang TPH untuk dimuat ke Surat Jalan.',
+                'items' => 'Pilih minimal satu catatan stasiun timbang TPH untuk dimuat ke Surat Jalan.',
             ]);
         }
 
@@ -264,7 +280,7 @@ class HarvestLoadingService
             $remainingSacks = $record->remainingSacks();
             if ($loadedSacks > $remainingSacks) {
                 throw ValidationException::withMessages([
-                    'items' => "Klaim ganda ditolak: Lot {$record->lot_number} hanya menyisakan {$remainingSacks} karung di TPH.",
+                    'items' => "Klaim ganda ditolak: Stasiun {$record->lot_number} hanya menyisakan {$remainingSacks} karung di TPH.",
                 ]);
             }
 

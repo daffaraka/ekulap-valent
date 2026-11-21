@@ -13,7 +13,7 @@ class GetHarvestBacklogTool implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Mengambil rekap lot hasil panen & brondolan di TPH yang berstatus Belum Diangkut atau Diangkut Sebagian (restan), termasuk jumlah sisa karung dan estimasi Kg.';
+        return 'Mengambil rekap stasiun hasil panen & brondolan di TPH yang berstatus Belum Diangkut atau Diangkut Sebagian (restan), termasuk jumlah sisa karung dan estimasi Kg.';
     }
 
     public function handle(Request $request): Stringable|string
@@ -22,7 +22,7 @@ class GetHarvestBacklogTool implements Tool
         $divisionId = isset($request['division_id']) ? (int) $request['division_id'] : null;
 
         $query = TphHarvestRecord::query()
-            ->with(['division', 'block', 'tphPoint', 'worker', 'workers'])
+            ->with(['division', 'block', 'blocks', 'tphPoint', 'worker', 'workers'])
             ->whereIn('transport_status', [
                 TransportStatus::BelumDiangkut->value,
                 TransportStatus::DiangkutSebagian->value,
@@ -50,7 +50,7 @@ class GetHarvestBacklogTool implements Tool
                 'lot_number' => $record->lot_number,
                 'work_date' => $record->work_date->toDateString(),
                 'division' => $record->division->code,
-                'block' => $record->block->code,
+                'block' => $record->formattedBlockCodes(),
                 'tph_code' => $record->tphPoint->code,
                 'worker' => $workerNames !== '' ? $workerNames : $record->worker->name,
                 'harvest_type' => $record->harvest_type->value,

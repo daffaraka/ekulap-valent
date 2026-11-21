@@ -17,10 +17,17 @@ const resolveWorkerNames = (item: TphHarvestRecord): string => {
     return item.worker?.name ?? '-';
 };
 
+const resolveBlockCodes = (item: TphHarvestRecord): string => {
+    if (item.blocks && item.blocks.length > 0) {
+        return item.blocks.map((b) => b.code).join(', ');
+    }
+    return item.block?.code ?? '-';
+};
+
 const harvestColumns: DataTableColumn<TphHarvestRecord>[] = [
     {
         key: 'lot',
-        header: 'Lot / Tgl',
+        header: 'Stasiun / Tgl',
         sortValue: (row) => `${row.work_date} ${row.lot_number}`,
         render: (item) => (
             <>
@@ -37,11 +44,11 @@ const harvestColumns: DataTableColumn<TphHarvestRecord>[] = [
         key: 'location',
         header: 'Blok, TPH & Pekerja',
         sortValue: (row) =>
-            `${row.block?.code ?? ''} ${row.tph_point?.code ?? ''}`,
+            `${resolveBlockCodes(row)} ${row.tph_point?.code ?? ''}`,
         render: (item) => (
             <>
                 <div className="font-medium text-[#102B26]">
-                    Blok {item.block?.code ?? '-'} ·{' '}
+                    Blok {resolveBlockCodes(item)} ·{' '}
                     {item.tph_point?.code ?? '-'}
                 </div>
                 <div className="text-[11px] text-[#5A6C68]">
@@ -107,9 +114,9 @@ export function RecentActivityTables({
                     defaultPageSize={5}
                     showPageSize={false}
                     searchableText={(row) =>
-                        `${row.lot_number} ${row.block?.code ?? ''} ${row.tph_point?.code ?? ''} ${resolveWorkerNames(row)}`
+                        `${row.lot_number} ${resolveBlockCodes(row)} ${row.tph_point?.code ?? ''} ${resolveWorkerNames(row)}`
                     }
-                    searchPlaceholder="Cari lot / blok / pekerja..."
+                    searchPlaceholder="Cari stasiun / blok / pekerja..."
                     emptyMessage="Belum ada catatan timbang TPH."
                 />
             </div>

@@ -4,7 +4,30 @@ export type UserRole =
     | 'Supervisi/Asisten'
     | 'Pimpinan (EM/RC)'
     | 'Supir'
-    | 'Checker PKS';
+    | 'Checker PKS'
+    | (string & {});
+
+export type PermissionItem = {
+    name: string;
+    label: string;
+    description: string;
+};
+
+export type PermissionGroup = {
+    key: string;
+    label: string;
+    description: string;
+    permissions: PermissionItem[];
+};
+
+export type RoleSummary = {
+    id: number;
+    name: string;
+    is_system: boolean;
+    is_admin: boolean;
+    users_count: number;
+    permissions: string[];
+};
 
 export type RecordStatus = 'Aktif' | 'Nonaktif';
 
@@ -121,6 +144,7 @@ export type TphHarvestRecord = {
     loaded_sack_count: number;
     division?: Division;
     block?: Block;
+    blocks?: Block[];
     tph_point?: TphPoint;
     worker?: Worker;
     workers?: Worker[];
