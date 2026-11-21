@@ -291,7 +291,7 @@ function StatusBreakdownCard({
                 </span>
             </div>
             <div className="mt-0.5 text-[11px] text-[#5A6C68]">
-                {formatKg(segment.net_weight_kg)} · {segment.lot_count} Lot
+                {formatKg(segment.net_weight_kg)} · {segment.lot_count} Stasiun
             </div>
         </div>
     );

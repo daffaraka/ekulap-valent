@@ -27,6 +27,8 @@ export type RekapanDailyRow = {
     restan_days: number;
     divisions: string[];
     blocks: string[];
+    workers: string[];
+    weighers: string[];
     records: RekapanLotItem[];
 };
 
@@ -45,6 +47,7 @@ export type StationRestanLot = {
     tph_code: string;
     harvest_type: string;
     worker_names: string;
+    weigher_name: string;
     sack_count: number;
     unloaded_sacks: number;
     belum_muat_sacks: number;
@@ -60,6 +63,8 @@ export type RekapanStationRow = {
     location_label: string;
     division_codes: string[];
     block_codes: string[];
+    worker_names: string[];
+    weigher_names: string[];
     lot_count: number;
     restan_sacks: number;
     unloaded_sacks: number;

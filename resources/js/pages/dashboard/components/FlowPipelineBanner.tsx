@@ -26,7 +26,7 @@ export function FlowPipelineBanner({
                     </h2>
                     <p className="text-xs text-[#5A6C68]">
                         Pantauan real-time pergerakan karung dan berat bersih
-                        per status lot.
+                        per status stasiun.
                     </p>
                 </div>
                 <span className="rounded-lg bg-[#E9EEE9] px-3 py-1 text-xs font-medium text-[#102B26]">
@@ -57,7 +57,7 @@ export function FlowPipelineBanner({
                             </div>
                             <div className="text-xs text-[#5A6C68]">
                                 {formatKg(item.net_weight_kg)} ·{' '}
-                                {item.lot_count} Lot
+                                {item.lot_count} Stasiun
                             </div>
                             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#E9EEE9]">
                                 <div

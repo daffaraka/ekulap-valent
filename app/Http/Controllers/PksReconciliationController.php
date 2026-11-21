@@ -104,7 +104,16 @@ class PksReconciliationController extends Controller
     public function exportCsv(): StreamedResponse
     {
         $orders = DeliveryOrder::query()
-            ->with(['division', 'truck', 'pksMill', 'loader'])
+            ->with([
+                'division',
+                'truck',
+                'pksMill',
+                'loader',
+                'items.harvestRecord.worker',
+                'items.harvestRecord.workers',
+                'items.harvestRecord.weigher',
+                'items.harvestRecord.recorder',
+            ])
             ->orderByDesc('id')
             ->get();
 
@@ -123,6 +132,8 @@ class PksReconciliationController extends Controller
                 'PKS Tujuan',
                 'Keterangan SPB',
                 'Petugas Muat',
+                'Nama Pekerja',
+                'Penimbang',
                 'Total Karung',
                 'Estimasi Kebun (Kg)',
                 'Nomor Tiket PKS',
@@ -134,6 +145,23 @@ class PksReconciliationController extends Controller
             ]);
 
             foreach ($orders as $order) {
+                $workerNames = $order->items
+                    ->flatMap(static fn ($item): array => $item->harvestRecord !== null
+                        ? $item->harvestRecord->resolvedWorkerNamesList()
+                        : [])
+                    ->unique()
+                    ->values()
+                    ->implode(', ');
+
+                $weigherNames = $order->items
+                    ->map(static fn ($item): string => $item->harvestRecord !== null
+                        ? $item->harvestRecord->resolvedWeigherName()
+                        : '')
+                    ->filter(static fn (string $name): bool => $name !== '' && $name !== '-')
+                    ->unique()
+                    ->values()
+                    ->implode(', ');
+
                 fputcsv($handle, [
                     $order->spb_number,
                     $order->division->code.' - '.$order->division->name,
@@ -142,6 +170,8 @@ class PksReconciliationController extends Controller
                     $order->pksMill->name,
                     $order->notes ?? '-',
                     $order->loader->name,
+                    $workerNames !== '' ? $workerNames : '-',
+                    $weigherNames !== '' ? $weigherNames : '-',
                     $order->total_sacks_loaded,
                     $order->total_estimated_kg,
                     $order->pks_ticket_number ?? '-',

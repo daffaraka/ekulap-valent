@@ -18,7 +18,7 @@ export function AiSnapshotCards({ snapshot }: AiSnapshotCardsProps) {
                 </div>
                 <div className="mt-0.5 text-xs text-[#5A6C68]">
                     {formatKg(snapshot.backlog.total_remaining_kg)} ·{' '}
-                    {snapshot.backlog.pending_lot_count} Lot TPH
+                    {snapshot.backlog.pending_lot_count} Stasiun TPH
                 </div>
             </div>
 
@@ -41,7 +41,7 @@ export function AiSnapshotCards({ snapshot }: AiSnapshotCardsProps) {
                     Tool · GPS Deviation
                 </div>
                 <div className="mt-1.5 text-lg font-semibold text-[#102B26]">
-                    {snapshot.gps_audit.flagged_count} Lot Menyimpang
+                    {snapshot.gps_audit.flagged_count} Stasiun Menyimpang
                 </div>
                 <div className="mt-0.5 text-xs text-[#5A6C68]">
                     Batas toleransi: {snapshot.gps_audit.max_tolerance_meters}{' '}

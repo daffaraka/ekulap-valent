@@ -63,12 +63,27 @@ export function RekapanDailyTable({
             ),
         },
         {
+            key: 'workers',
+            header: 'Pekerja & Penimbang',
+            sortValue: (r) => r.workers.join(', '),
+            render: (row) => (
+                <>
+                    <div className="font-medium text-[#102B26]">
+                        {row.workers.join(', ') || '-'}
+                    </div>
+                    <div className="text-[11px] text-[#5A6C68]">
+                        Penimbang: {row.weighers.join(', ') || '-'}
+                    </div>
+                </>
+            ),
+        },
+        {
             key: 'lots',
-            header: 'Lot / TPH',
+            header: 'Stasiun / TPH',
             cellClassName: 'whitespace-nowrap text-[#102B26]',
             sortValue: (r) => r.lot_count,
             render: (row) =>
-                `${formatNumber(row.lot_count)} Lot · ${formatNumber(row.tph_count)} TPH`,
+                `${formatNumber(row.lot_count)} Stasiun · ${formatNumber(row.tph_count)} TPH`,
         },
         {
             key: 'total_sacks',
@@ -121,7 +136,7 @@ export function RekapanDailyTable({
                     onClick={() => onSelectDate(row)}
                     className="min-h-9 rounded-md border border-[#1C5143] px-3 text-xs font-semibold text-[#1C5143] hover:bg-[#E8F1EC]"
                 >
-                    Detail Lot ({row.lot_count})
+                    Detail Stasiun ({row.lot_count})
                 </button>
             ),
         },
@@ -133,9 +148,9 @@ export function RekapanDailyTable({
             columns={columns}
             getRowKey={(r) => r.work_date}
             searchableText={(r) =>
-                `${r.work_date} ${formatDateOnly(r.work_date)} ${r.divisions.join(' ')} ${r.blocks.join(' ')}`
+                `${r.work_date} ${formatDateOnly(r.work_date)} ${r.divisions.join(' ')} ${r.blocks.join(' ')} ${r.workers.join(' ')} ${r.weighers.join(' ')}`
             }
-            searchPlaceholder="Cari tanggal / divisi / blok..."
+            searchPlaceholder="Cari tanggal / divisi / blok / pekerja / penimbang..."
             emptyMessage="Belum ada catatan panen & kutip lapis pada rentang tanggal ini."
         />
     );

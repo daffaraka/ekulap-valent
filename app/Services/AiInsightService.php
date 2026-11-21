@@ -45,7 +45,7 @@ class AiInsightService
             $alerts[] = [
                 'severity' => 'warning',
                 'title' => "{$backlog['total_remaining_sacks']} Karung Belum Diangkut ({$backlog['total_remaining_kg']} Kg)",
-                'detail' => "Terdapat {$backlog['pending_lot_count']} lot di TPH yang menunggu muat Surat Jalan (SPB).",
+                'detail' => "Terdapat {$backlog['pending_lot_count']} stasiun di TPH yang menunggu muat Surat Jalan (SPB).",
             ];
         }
 
@@ -190,7 +190,7 @@ class AiInsightService
                 array_slice($lots, 0, 5),
             );
             $sections[] = "**1. Status Antrean Karung di TPH (Belum / Sebagian Diangkut)**\n"
-                ."Total {$backlog['pending_lot_count']} lot masih memiliki sisa {$backlog['total_remaining_sacks']} karung ({$backlog['total_remaining_kg']} Kg).\n"
+                ."Total {$backlog['pending_lot_count']} stasiun masih memiliki sisa {$backlog['total_remaining_sacks']} karung ({$backlog['total_remaining_kg']} Kg).\n"
                 .($lotLines !== [] ? implode("\n", $lotLines) : '- Seluruh hasil timbang TPH sudah terangkut ke truk/PKS.');
         }
 

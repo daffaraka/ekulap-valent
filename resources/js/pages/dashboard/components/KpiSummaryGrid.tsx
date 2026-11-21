@@ -113,8 +113,9 @@ export function KpiSummaryGrid({ kpis }: KpiSummaryGridProps) {
                         <span className="font-medium text-[#102B26]">
                             {formatNumber(kpis.cumulative_restan_days)} Hari
                         </span>{' '}
-                        · {formatNumber(kpis.pending_restan_lots)} Lot (
-                        {formatNumber(kpis.pending_station_count ?? 0)} Stasiun)
+                        · {formatNumber(kpis.pending_restan_lots)} Stasiun (
+                        {formatNumber(kpis.pending_station_count ?? 0)} Titik
+                        TPH)
                     </span>
                     <span className="shrink-0 font-semibold text-[#1C5143]">
                         Per Stasiun →

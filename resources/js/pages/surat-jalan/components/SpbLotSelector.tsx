@@ -26,7 +26,8 @@ export function SpbLotSelector({
         <div>
             <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-bold text-[#102B26]">
-                    Pilih Lot TPH yang Masih Ada Sisa Karung ({lots.length} Lot)
+                    Pilih Stasiun TPH yang Masih Ada Sisa Karung ({lots.length}{' '}
+                    Stasiun)
                 </span>
                 <span className="rounded-lg bg-[#1C5143]/12 px-2.5 py-1 text-xs font-bold text-[#1C5143]">
                     Terpilih: {totalPickedSacks} Karung
@@ -37,7 +38,7 @@ export function SpbLotSelector({
 
             {lots.length === 0 ? (
                 <div className="rounded-md border border-[#CFD9CF] bg-[#E9EEE9]/50 p-4 text-xs text-[#466059]">
-                    Tidak ada lot dengan sisa karung di divisi ini.
+                    Tidak ada stasiun dengan sisa karung di divisi ini.
                 </div>
             ) : (
                 <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border border-[#CFD9CF] p-2.5">

@@ -44,6 +44,21 @@ export function RekapanStationTable({
             ),
         },
         {
+            key: 'workers',
+            header: 'Pekerja & Penimbang',
+            sortValue: (s) => s.worker_names.join(', '),
+            render: (row) => (
+                <>
+                    <div className="font-medium text-[#102B26]">
+                        {row.worker_names.join(', ') || '-'}
+                    </div>
+                    <div className="text-[11px] text-[#5A6C68]">
+                        Penimbang: {row.weigher_names.join(', ') || '-'}
+                    </div>
+                </>
+            ),
+        },
+        {
             key: 'restan_sacks',
             header: 'Total Karung Restan',
             cellClassName: 'whitespace-nowrap',
@@ -125,7 +140,7 @@ export function RekapanStationTable({
                     onClick={() => onSelectStation(row)}
                     className="min-h-9 rounded-md border border-[#1C5143] px-3 text-xs font-semibold text-[#1C5143] hover:bg-[#E8F1EC]"
                 >
-                    Detail Lot ({row.lot_count})
+                    Detail Stasiun ({row.lot_count})
                 </button>
             ),
         },
@@ -137,9 +152,9 @@ export function RekapanStationTable({
             columns={columns}
             getRowKey={(s) => s.tph_point_id}
             searchableText={(s) =>
-                `${s.tph_code} ${s.location_label} ${s.block_codes.join(' ')} ${s.division_codes.join(' ')}`
+                `${s.tph_code} ${s.location_label} ${s.block_codes.join(' ')} ${s.division_codes.join(' ')} ${s.worker_names.join(' ')} ${s.weigher_names.join(' ')}`
             }
-            searchPlaceholder="Cari stasiun TPH / blok / lokasi..."
+            searchPlaceholder="Cari stasiun TPH / blok / pekerja / penimbang..."
             emptyMessage="Tidak ada sisa restan di stasiun TPH pada rentang filter ini."
         />
     );

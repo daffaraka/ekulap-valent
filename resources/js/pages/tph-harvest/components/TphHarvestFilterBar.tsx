@@ -43,7 +43,7 @@ export function TphHarvestFilterBar({
                             onApplyFilter();
                         }
                     }}
-                    placeholder="Cari No. Lot, TPH, atau pekerja..."
+                    placeholder="Cari No. Stasiun, TPH, atau pekerja..."
                     className="min-h-11 rounded-md border border-[#C8D4C8] bg-[#E9EEE9]/45 px-3 text-xs text-[#102B26] focus:border-[#1C5143] focus:bg-white focus:outline-none"
                 />
 

@@ -15,7 +15,7 @@ type RekapanStationModalProps = {
 const lotColumns: DataTableColumn<StationRestanLot>[] = [
     {
         key: 'lot',
-        header: 'Lot & Tgl Panen',
+        header: 'Stasiun & Tgl Panen',
         sortValue: (i) => `${i.work_date} ${i.lot_number}`,
         render: (item) => (
             <>
@@ -30,13 +30,13 @@ const lotColumns: DataTableColumn<StationRestanLot>[] = [
     },
     {
         key: 'workers',
-        header: 'Pekerja & Jenis',
+        header: 'Pekerja & Penimbang',
         sortValue: (i) => i.worker_names,
         render: (item) => (
             <>
                 <div className="text-[#102B26]">{item.worker_names}</div>
                 <div className="text-[11px] text-[#5A6C68]">
-                    {item.harvest_type}
+                    Penimbang: {item.weigher_name} · {item.harvest_type}
                 </div>
             </>
         ),
@@ -125,9 +125,9 @@ export function RekapanStationModal({
                         columns={lotColumns}
                         getRowKey={(i) => i.id}
                         searchableText={(i) =>
-                            `${i.lot_number} ${i.block_code} ${i.worker_names} ${i.work_date}`
+                            `${i.lot_number} ${i.block_code} ${i.worker_names} ${i.weigher_name} ${i.work_date}`
                         }
-                        searchPlaceholder="Cari lot / blok / pekerja..."
+                        searchPlaceholder="Cari stasiun / blok / pekerja / penimbang..."
                         defaultPageSize={10}
                     />
                 </div>

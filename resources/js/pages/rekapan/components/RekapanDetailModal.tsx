@@ -12,7 +12,7 @@ type RekapanDetailModalProps = {
 const detailColumns: DataTableColumn<RekapanLotItem>[] = [
     {
         key: 'lot',
-        header: 'Lot & Jenis',
+        header: 'Stasiun & Jenis',
         sortValue: (i) => i.lot_number,
         render: (item) => (
             <>
@@ -42,13 +42,13 @@ const detailColumns: DataTableColumn<RekapanLotItem>[] = [
     },
     {
         key: 'workers',
-        header: 'Tenaga Kerja & Kerani',
+        header: 'Pekerja & Penimbang',
         sortValue: (i) => i.worker_names,
         render: (item) => (
             <>
                 <div className="text-[#102B26]">{item.worker_names}</div>
                 <div className="text-[11px] text-[#5A6C68]">
-                    Kerani: {item.weigher_name}
+                    Penimbang: {item.weigher_name}
                 </div>
             </>
         ),
@@ -105,11 +105,11 @@ export function RekapanDetailModal({ row, onClose }: RekapanDetailModalProps) {
                 <div className="flex items-start justify-between border-b border-[#102B26]/10 px-5 py-4">
                     <div>
                         <h3 className="text-base font-semibold text-[#102B26]">
-                            Rincian Lot Panen &amp; Kutip Lapis —{' '}
+                            Rincian Stasiun Panen &amp; Kutip Lapis —{' '}
                             {formatDateOnly(row.work_date)}
                         </h3>
                         <p className="mt-0.5 text-xs text-[#5A6C68]">
-                            {formatNumber(row.lot_count)} Lot ·{' '}
+                            {formatNumber(row.lot_count)} Stasiun ·{' '}
                             {formatNumber(row.total_sacks)} Karung · Netto{' '}
                             {formatKg(row.total_net_kg)} · Sisa Restan{' '}
                             {formatNumber(row.remaining_sacks)} Karung (
@@ -133,7 +133,7 @@ export function RekapanDetailModal({ row, onClose }: RekapanDetailModalProps) {
                         searchableText={(i) =>
                             `${i.lot_number} ${i.block_code} ${i.tph_code} ${i.worker_names} ${i.weigher_name}`
                         }
-                        searchPlaceholder="Cari lot / blok / pekerja..."
+                        searchPlaceholder="Cari stasiun / blok / pekerja / penimbang..."
                         defaultPageSize={10}
                     />
                 </div>
