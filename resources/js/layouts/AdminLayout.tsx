@@ -8,7 +8,11 @@ import { MobileBottomNav } from '@/layouts/components/MobileBottomNav';
 import type { FlashMessages, User } from '@/types';
 
 type SharedPageProps = {
-    auth?: { user: User | null };
+    auth?: {
+        user: User | null;
+        permissions?: string[];
+        roles?: string[];
+    };
     flash?: FlashMessages;
     pendingTphLots?: number;
     isDevelopment?: boolean;
@@ -30,6 +34,7 @@ export default function AdminLayout({
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
     const user = page.props.auth?.user ?? null;
+    const permissions = page.props.auth?.permissions ?? [];
     const pendingTphLots = page.props.pendingTphLots ?? 0;
     const isDevelopment = Boolean(page.props.isDevelopment);
 
@@ -43,6 +48,7 @@ export default function AdminLayout({
                 mobileOpen={mobileOpen}
                 pendingTphLots={pendingTphLots}
                 userRole={user?.role ?? 'Tinjauan Dashboard'}
+                permissions={permissions}
                 isAuthenticated={Boolean(user)}
                 isDevelopment={isDevelopment}
                 onCloseMobile={() => setMobileOpen(false)}
@@ -54,12 +60,13 @@ export default function AdminLayout({
                     title={title}
                     subtitle={subtitle}
                     user={user}
+                    canUseAi={permissions.includes('ai-assistant.use')}
                     isDevelopment={isDevelopment}
                     onOpenMobileMenu={() => setMobileOpen(true)}
                     onToggleDesktopSidebar={() => setCollapsed((prev) => !prev)}
                 />
 
-                <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 sm:p-6">
+                <main className="mx-auto w-full max-w-[1680px] min-w-0 flex-1 p-4 sm:p-6 xl:px-8 2xl:max-w-[1920px] 2xl:px-10">
                     <AlertBanner flash={page.props.flash} />
                     {children}
                 </main>
@@ -67,7 +74,7 @@ export default function AdminLayout({
 
             <MobileBottomNav
                 currentUrl={page.url}
-                userRole={user?.role ?? 'Tinjauan Dashboard'}
+                permissions={permissions}
                 isDevelopment={isDevelopment}
             />
         </div>

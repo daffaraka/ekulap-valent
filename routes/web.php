@@ -1,81 +1,97 @@
 <?php
 
-use App\Enums\UserRole;
 use App\Http\Controllers\AiAssistantController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryOrderController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\PksReconciliationController;
 use App\Http\Controllers\RekapanController;
+use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\SystemMonitorController;
 use App\Http\Controllers\TphHarvestController;
 use App\Http\Controllers\UserManagementController;
 use App\Models\User;
+use App\Services\RbacCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'role'])->group(function (): void {
+Route::middleware(['auth', 'verified', 'active'])->group(function (): void {
     Route::get('/', function (Request $request) {
         /** @var User|null $user */
         $user = $request->user();
 
-        if ($user?->role === UserRole::KeraniProduksi) {
-            return redirect()->route('tph-harvest.index');
+        if ($user instanceof User) {
+            $homeRoute = app(RbacCatalog::class)->homeRouteFor($user);
+            if ($homeRoute !== 'dashboard') {
+                return redirect()->route($homeRoute);
+            }
         }
 
         return app()->call([app(DashboardController::class), 'index'], ['request' => $request]);
     })->name('home');
 
     Route::get('dashboard', [DashboardController::class, 'index'])
-        ->middleware('role:Admin,Supervisi/Asisten,Pimpinan (EM/RC),Supir,Checker PKS')
+        ->middleware('permission:dashboard.view')
         ->name('dashboard');
 
-    // Rekapan Kutip Lapis per Tanggal
-    Route::middleware('role:Admin,Supervisi/Asisten,Pimpinan (EM/RC),Supir,Checker PKS')->group(function (): void {
-        Route::get('rekapan-kutip-lapis', [RekapanController::class, 'index'])->name('rekapan.index');
-        Route::get('rekapan-kutip-lapis/export', [RekapanController::class, 'exportCsv'])->name('rekapan.export');
-    });
+    // Rekapan Kutip Lapis per Tanggal & Stasiun
+    Route::get('rekapan-kutip-lapis', [RekapanController::class, 'index'])
+        ->middleware('permission:rekapan.view')
+        ->name('rekapan.index');
+    Route::get('rekapan-kutip-lapis/export', [RekapanController::class, 'exportCsv'])
+        ->middleware('permission:rekapan.export')
+        ->name('rekapan.export');
 
     // Tabel 8: Catatan Hasil & Timbang TPH
-    Route::get('tph-harvest', [TphHarvestController::class, 'index'])->name('tph-harvest.index');
+    Route::get('tph-harvest', [TphHarvestController::class, 'index'])
+        ->middleware('permission:tph-harvest.view')
+        ->name('tph-harvest.index');
     Route::post('tph-harvest', [TphHarvestController::class, 'store'])
-        ->middleware('role:Admin,Kerani Produksi,Supervisi/Asisten')
+        ->middleware('permission:tph-harvest.create')
         ->name('tph-harvest.store');
     Route::delete('tph-harvest/{tphHarvest}', [TphHarvestController::class, 'destroy'])
-        ->middleware('role:Admin,Kerani Produksi,Supervisi/Asisten')
+        ->middleware('permission:tph-harvest.delete')
         ->name('tph-harvest.destroy');
 
     // Tabel 9 & 10: Surat Jalan (SPB) & Rincian Muatan Truk
-    Route::get('surat-jalan', [DeliveryOrderController::class, 'index'])->name('surat-jalan.index');
+    Route::get('surat-jalan', [DeliveryOrderController::class, 'index'])
+        ->middleware('permission:surat-jalan.view')
+        ->name('surat-jalan.index');
     Route::post('surat-jalan', [DeliveryOrderController::class, 'store'])
-        ->middleware('role:Admin,Kerani Produksi,Supervisi/Asisten')
+        ->middleware('permission:surat-jalan.create')
         ->name('surat-jalan.store');
-    Route::get('surat-jalan/{deliveryOrder}', [DeliveryOrderController::class, 'show'])->name('surat-jalan.show');
+    Route::get('surat-jalan/{deliveryOrder}', [DeliveryOrderController::class, 'show'])
+        ->middleware('permission:surat-jalan.view')
+        ->name('surat-jalan.show');
     Route::post('surat-jalan/{deliveryOrder}/items', [DeliveryOrderController::class, 'addItems'])
-        ->middleware('role:Admin,Kerani Produksi,Supervisi/Asisten')
+        ->middleware('permission:surat-jalan.create')
         ->name('surat-jalan.add-items');
     Route::post('surat-jalan/{deliveryOrder}/dispatch', [DeliveryOrderController::class, 'dispatchOrder'])
-        ->middleware('role:Admin,Kerani Produksi,Supervisi/Asisten,Supir')
+        ->middleware('permission:surat-jalan.dispatch')
         ->name('surat-jalan.dispatch');
 
     // Status Kutip Lapis & Rekonsiliasi Timbangan PKS
-    Route::get('pks-reconciliation', [PksReconciliationController::class, 'index'])->name('pks-reconciliation.index');
+    Route::get('pks-reconciliation', [PksReconciliationController::class, 'index'])
+        ->middleware('permission:pks-reconciliation.view')
+        ->name('pks-reconciliation.index');
     Route::post('pks-reconciliation/{deliveryOrder}/weigh', [PksReconciliationController::class, 'weigh'])
-        ->middleware('role:Admin,Checker PKS,Supervisi/Asisten')
+        ->middleware('permission:pks-reconciliation.weigh')
         ->name('pks-reconciliation.weigh');
-    Route::get('pks-reconciliation/export', [PksReconciliationController::class, 'exportCsv'])->name('pks-reconciliation.export');
+    Route::get('pks-reconciliation/export', [PksReconciliationController::class, 'exportCsv'])
+        ->middleware('permission:pks-reconciliation.export')
+        ->name('pks-reconciliation.export');
 
     // Asisten AI Sawit (Laravel AI SDK)
-    Route::middleware('role:Admin,Supervisi/Asisten,Pimpinan (EM/RC),Supir,Checker PKS')->group(function (): void {
+    Route::middleware('permission:ai-assistant.use')->group(function (): void {
         Route::get('ai-assistant', [AiAssistantController::class, 'index'])->name('ai-assistant.index');
         Route::post('ai-assistant/ask', [AiAssistantController::class, 'ask'])->name('ai-assistant.ask');
     });
 
     // Master Data (Tabel 2 - 7)
     Route::get('master-data', [MasterDataController::class, 'index'])
-        ->middleware('role:Admin,Supervisi/Asisten,Pimpinan (EM/RC)')
+        ->middleware('permission:master-data.view')
         ->name('master-data.index');
-    Route::middleware('role:Admin,Supervisi/Asisten')->group(function (): void {
+    Route::middleware('permission:master-data.manage')->group(function (): void {
         Route::post('master-data/divisions', [MasterDataController::class, 'storeDivision'])->name('master-data.divisions.store');
         Route::delete('master-data/divisions/{division}', [MasterDataController::class, 'destroyDivision'])->name('master-data.divisions.destroy');
         Route::post('master-data/blocks', [MasterDataController::class, 'storeBlock'])->name('master-data.blocks.store');
@@ -90,19 +106,33 @@ Route::middleware(['auth', 'verified', 'role'])->group(function (): void {
         Route::delete('master-data/pks-mills/{pksMill}', [MasterDataController::class, 'destroyPksMill'])->name('master-data.pks-mills.destroy');
     });
 
-    // Tabel 1: Manajemen Pengguna Aplikasi (Khusus Admin; Supervisi/Asisten tidak diizinkan)
-    Route::middleware('role:Admin')->group(function (): void {
-        Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
+    // Tabel 1: Manajemen Pengguna Aplikasi
+    Route::get('users', [UserManagementController::class, 'index'])
+        ->middleware('permission:users.view')
+        ->name('users.index');
+    Route::middleware('permission:users.manage')->group(function (): void {
         Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
         Route::put('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
         Route::patch('users/{user}/toggle', [UserManagementController::class, 'toggleStatus'])->name('users.toggle');
     });
 
-    // Monitor Kesehatan Aplikasi, Upload & Keamanan Login/Aktivitas (Khusus Admin & Pimpinan)
-    Route::middleware('role:Admin,Pimpinan (EM/RC)')->group(function (): void {
-        Route::get('system-monitor', [SystemMonitorController::class, 'index'])->name('system-monitor.index');
-        Route::get('system-monitor/export', [SystemMonitorController::class, 'exportCsv'])->name('system-monitor.export');
+    // Manajemen Role & Matriks Permission (RBAC)
+    Route::get('roles', [RoleManagementController::class, 'index'])
+        ->middleware('permission:roles.view')
+        ->name('roles.index');
+    Route::middleware('permission:roles.manage')->group(function (): void {
+        Route::post('roles', [RoleManagementController::class, 'store'])->name('roles.store');
+        Route::put('roles/{role}/permissions', [RoleManagementController::class, 'updatePermissions'])->name('roles.update-permissions');
+        Route::delete('roles/{role}', [RoleManagementController::class, 'destroy'])->name('roles.destroy');
     });
+
+    // Monitor Kesehatan Aplikasi, Upload & Keamanan Login/Aktivitas
+    Route::get('system-monitor', [SystemMonitorController::class, 'index'])
+        ->middleware('permission:system-monitor.view')
+        ->name('system-monitor.index');
+    Route::get('system-monitor/export', [SystemMonitorController::class, 'exportCsv'])
+        ->middleware('permission:system-monitor.export')
+        ->name('system-monitor.export');
 });
 
 require __DIR__.'/settings.php';

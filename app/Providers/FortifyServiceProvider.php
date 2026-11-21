@@ -5,8 +5,8 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Enums\RecordStatus;
-use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\RbacCatalog;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -35,8 +35,11 @@ class FortifyServiceProvider extends ServiceProvider
                     /** @var User|null $user */
                     $user = $request->user();
 
-                    if ($user?->role === UserRole::KeraniProduksi) {
-                        return redirect()->route('tph-harvest.index');
+                    if ($user instanceof User) {
+                        $homeRoute = app(RbacCatalog::class)->homeRouteFor($user);
+                        if ($homeRoute !== 'dashboard') {
+                            return redirect()->route($homeRoute);
+                        }
                     }
 
                     return redirect()->intended(route('dashboard', absolute: false));

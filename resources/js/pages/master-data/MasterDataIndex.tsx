@@ -1,5 +1,5 @@
-import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { MasterDivisionsBlocks } from '@/pages/master-data/components/MasterDivisionsBlocks';
 import { MasterTphWorkers } from '@/pages/master-data/components/MasterTphWorkers';
@@ -10,7 +10,6 @@ import type {
     PksMill,
     TphPoint,
     Truck,
-    User,
     Worker,
 } from '@/types';
 
@@ -48,9 +47,8 @@ export default function MasterDataIndex({
     jobTypes,
     statuses,
 }: MasterDataIndexProps) {
-    const page = usePage<{ auth: { user: User } }>();
-    const role = page.props.auth.user.role;
-    const canModify = role === 'Admin' || role === 'Supervisi/Asisten';
+    const { can } = usePermissions();
+    const canModify = can('master-data.manage');
 
     const initialTab = TABS.some((t) => t.key === activeTab)
         ? (activeTab as MasterTab)

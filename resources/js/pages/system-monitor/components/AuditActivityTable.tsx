@@ -16,7 +16,7 @@ type AuditActivityTableProps = {
     onUpdateFilter: (key: keyof MonitorFilters, value: string) => void;
     onApply: () => void;
     onReset: () => void;
-    exportHref: string;
+    exportHref?: string;
 };
 
 const severityBadge = (severity: string): string => {
@@ -171,12 +171,14 @@ export function AuditActivityTable({
                             Reset
                         </button>
                     </div>
-                    <a
-                        href={exportHref}
-                        className="inline-flex min-h-10 items-center rounded-md border border-[#1C5143] px-3 text-xs font-semibold text-[#1C5143] hover:bg-[#E8F1EC]"
-                    >
-                        Ekspor Audit CSV
-                    </a>
+                    {exportHref && (
+                        <a
+                            href={exportHref}
+                            className="inline-flex min-h-10 items-center rounded-md border border-[#1C5143] px-3 text-xs font-semibold text-[#1C5143] hover:bg-[#E8F1EC]"
+                        >
+                            Ekspor Audit CSV
+                        </a>
+                    )}
                 </div>
             </div>
 

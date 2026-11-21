@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Enums\RecordStatus;
-use App\Enums\UserRole;
 use App\Http\Requests\Ekulap\StoreUserRequest;
 use App\Models\Division;
 use App\Models\User;
 use App\Services\AuditLoggerService;
+use App\Services\RbacCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
 {
@@ -24,7 +25,12 @@ class UserManagementController extends Controller
         return Inertia::render('users/UsersIndex', [
             'users' => User::query()->with('division:id,code,name')->orderBy('id')->get(),
             'divisions' => Division::query()->orderBy('code')->get(['id', 'code', 'name']),
-            'roles' => UserRole::values(),
+            'roles' => Role::query()
+                ->where('guard_name', RbacCatalog::GUARD)
+                ->orderBy('id')
+                ->pluck('name')
+                ->values()
+                ->all(),
             'statuses' => RecordStatus::values(),
         ]);
     }
@@ -43,17 +49,19 @@ class UserManagementController extends Controller
             'email' => $email,
             'email_verified_at' => now(),
             'password' => Hash::make((string) $validated['password']),
-            'role' => $validated['role'],
+            'role' => (string) $validated['role'],
             'division_id' => ! empty($validated['division_id']) ? $validated['division_id'] : null,
             'status' => $validated['status'],
         ]);
+
+        $createdUser->syncRoles([(string) $validated['role']]);
 
         $actor = $request->user();
         $actorName = $actor instanceof User ? $actor->name : 'Admin';
         $this->auditLogger->log(
             category: 'users',
             action: 'created',
-            humanMessage: "{$actorName} menambahkan akun pengguna baru: {$createdUser->name} (NIK {$createdUser->username} · peran {$createdUser->role->value}).",
+            humanMessage: "{$actorName} menambahkan akun pengguna baru: {$createdUser->name} (NIK {$createdUser->username} · peran {$createdUser->roleLabel()}).",
             severity: 'warning',
             subject: $createdUser,
             actor: $actor instanceof User ? $actor : null,
@@ -72,7 +80,7 @@ class UserManagementController extends Controller
             'name' => $validated['name'],
             'username' => $validated['username'],
             'phone' => $validated['phone'] ?? null,
-            'role' => $validated['role'],
+            'role' => (string) $validated['role'],
             'division_id' => ! empty($validated['division_id']) ? $validated['division_id'] : null,
             'status' => $validated['status'],
         ];
@@ -86,13 +94,14 @@ class UserManagementController extends Controller
         }
 
         $user->update($payload);
+        $user->syncRoles([(string) $validated['role']]);
 
         $actor = $request->user();
         $actorName = $actor instanceof User ? $actor->name : 'Admin';
         $this->auditLogger->log(
             category: 'users',
             action: 'updated',
-            humanMessage: "{$actorName} memperbarui data/hak akses pengguna {$user->name} (NIK {$user->username} · peran {$user->role->value} · status {$user->status->value}).",
+            humanMessage: "{$actorName} memperbarui data/hak akses pengguna {$user->name} (NIK {$user->username} · peran {$user->roleLabel()} · status {$user->status->value}).",
             severity: 'warning',
             subject: $user,
             actor: $actor instanceof User ? $actor : null,

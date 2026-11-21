@@ -6,7 +6,8 @@ type RekapanFilterBarProps = {
     dateTo: string;
     divisionId: string;
     divisions: Division[];
-    exportHref: string;
+    exportHref?: string;
+    exportLabel?: string;
     onChangeDateFrom: (value: string) => void;
     onChangeDateTo: (value: string) => void;
     onChangeDivisionId: (value: string) => void;
@@ -20,6 +21,7 @@ export function RekapanFilterBar({
     divisionId,
     divisions,
     exportHref,
+    exportLabel = 'Ekspor CSV Harian',
     onChangeDateFrom,
     onChangeDateTo,
     onChangeDivisionId,
@@ -82,14 +84,16 @@ export function RekapanFilterBar({
                         Reset
                     </button>
                 </div>
-                <div className="flex items-end">
-                    <a
-                        href={exportHref}
-                        className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-[#1C5143] px-3 text-xs font-semibold text-[#1C5143] hover:bg-[#E8F1EC]"
-                    >
-                        Ekspor CSV Harian
-                    </a>
-                </div>
+                {exportHref && (
+                    <div className="flex items-end">
+                        <a
+                            href={exportHref}
+                            className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-[#1C5143] px-3 text-xs font-semibold text-[#1C5143] hover:bg-[#E8F1EC]"
+                        >
+                            {exportLabel}
+                        </a>
+                    </div>
+                )}
             </div>
         </div>
     );

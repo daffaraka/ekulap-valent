@@ -1,9 +1,9 @@
-import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { UserFormModal } from '@/pages/users/components/UserFormModal';
 import { UsersTable } from '@/pages/users/components/UsersTable';
-import type { Division, EkulapUser, User } from '@/types';
+import type { Division, EkulapUser } from '@/types';
 
 type UsersIndexProps = {
     users: EkulapUser[];
@@ -18,8 +18,8 @@ export default function UsersIndex({
     roles,
     statuses,
 }: UsersIndexProps) {
-    const page = usePage<{ auth: { user: User } }>();
-    const canManage = page.props.auth.user.role === 'Admin';
+    const { can } = usePermissions();
+    const canManage = can('users.manage');
 
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [editingUser, setEditingUser] = useState<EkulapUser | null>(null);

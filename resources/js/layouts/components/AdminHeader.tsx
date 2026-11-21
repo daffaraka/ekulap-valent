@@ -6,6 +6,7 @@ type AdminHeaderProps = {
     title: string;
     subtitle?: string;
     user: User | null;
+    canUseAi?: boolean;
     isDevelopment?: boolean;
     onOpenMobileMenu: () => void;
     onToggleDesktopSidebar: () => void;
@@ -47,6 +48,7 @@ export function AdminHeader({
     title,
     subtitle,
     user,
+    canUseAi = false,
     isDevelopment = false,
     onOpenMobileMenu,
     onToggleDesktopSidebar,
@@ -95,7 +97,7 @@ export function AdminHeader({
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
-                    {user?.role !== 'Kerani Produksi' && (
+                    {canUseAi && (
                         <Link
                             href="/ai-assistant"
                             className={`ek-btn hidden min-h-10 items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold sm:inline-flex ${theme.actionBtn}`}

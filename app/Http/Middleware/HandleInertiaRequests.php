@@ -48,6 +48,8 @@ class HandleInertiaRequests extends Middleware
             'isDevelopment' => app()->environment(['local', 'development']),
             'auth' => [
                 'user' => $user,
+                'permissions' => $user ? $user->resolvedPermissionNames() : [],
+                'roles' => $user ? $user->getRoleNames()->values()->all() : [],
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

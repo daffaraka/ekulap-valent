@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { TphHarvestFilterBar } from '@/pages/tph-harvest/components/TphHarvestFilterBar';
 import { TphHarvestFormModal } from '@/pages/tph-harvest/components/TphHarvestFormModal';
@@ -44,11 +45,9 @@ export default function TphHarvestIndex({
 }: TphHarvestIndexProps) {
     const page = usePage<{ auth: { user: User } }>();
     const currentUser = page.props.auth.user;
-    const role = currentUser.role;
-    const canModify =
-        role === 'Admin' ||
-        role === 'Kerani Produksi' ||
-        role === 'Supervisi/Asisten';
+    const { can } = usePermissions();
+    const canCreate = can('tph-harvest.create');
+    const canDelete = can('tph-harvest.delete');
 
     const [search, setSearch] = useState<string>(filters.search);
     const [status, setStatus] = useState<string>(filters.status);
@@ -84,7 +83,7 @@ export default function TphHarvestIndex({
                     divisionId={divisionId}
                     divisions={divisions}
                     transportStatuses={transportStatuses}
-                    canCreate={canModify}
+                    canCreate={canCreate}
                     onSearchChange={setSearch}
                     onStatusChange={(val) => {
                         setStatus(val);
@@ -98,7 +97,7 @@ export default function TphHarvestIndex({
                     onOpenCreate={() => setModalOpen(true)}
                 />
 
-                <TphHarvestTable records={records} canDelete={canModify} />
+                <TphHarvestTable records={records} canDelete={canDelete} />
 
                 <TphHarvestFormModal
                     open={modalOpen}

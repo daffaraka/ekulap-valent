@@ -1,10 +1,11 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { SpbDispatchModal } from '@/pages/surat-jalan/components/SpbDispatchModal';
 import { SuratJalanPrintSheet } from '@/pages/surat-jalan/components/SuratJalanPrintSheet';
-import type { AvailableLotOption, DeliveryOrder, User } from '@/types';
+import type { AvailableLotOption, DeliveryOrder } from '@/types';
 
 type SuratJalanDetailProps = {
     order: DeliveryOrder;
@@ -15,12 +16,9 @@ export default function SuratJalanDetail({
     order,
     availableLots,
 }: SuratJalanDetailProps) {
-    const page = usePage<{ auth: { user: User } }>();
-    const role = page.props.auth.user.role;
-    const canModify =
-        role === 'Admin' ||
-        role === 'Kerani Produksi' ||
-        role === 'Supervisi/Asisten';
+    const { can } = usePermissions();
+    const canModify = can('surat-jalan.create');
+    const canDispatch = can('surat-jalan.dispatch');
 
     const [selectedLotId, setSelectedLotId] = useState<string>(
         availableLots[0] ? String(availableLots[0].id) : '',
@@ -60,15 +58,16 @@ export default function SuratJalanDetail({
                     </Link>
 
                     <div className="flex flex-wrap gap-2">
-                        {order.delivery_status === 'Belum Muat' && (
-                            <button
-                                type="button"
-                                onClick={() => setDispatchModalOpen(true)}
-                                className="min-h-10 rounded-md bg-[#D6A84F] px-4 text-xs font-bold text-[#102B26]"
-                            >
-                                Kirim SPB (Sudah Dikirim)
-                            </button>
-                        )}
+                        {canDispatch &&
+                            order.delivery_status === 'Belum Muat' && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDispatchModalOpen(true)}
+                                    className="min-h-10 rounded-md bg-[#D6A84F] px-4 text-xs font-bold text-[#102B26]"
+                                >
+                                    Kirim SPB (Sudah Dikirim)
+                                </button>
+                            )}
                         <button
                             type="button"
                             onClick={() => window.print()}
@@ -90,7 +89,7 @@ export default function SuratJalanDetail({
                         >
                             <div className="min-w-56 flex-1">
                                 <label className="mb-1 block text-xs font-semibold">
-                                    Tambah Muatan dari Lot TPH Tersisa
+                                    Tambah Muatan dari Stasiun TPH Tersisa
                                 </label>
                                 <select
                                     value={selectedLotId}

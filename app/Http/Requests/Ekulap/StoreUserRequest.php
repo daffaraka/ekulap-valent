@@ -3,8 +3,8 @@
 namespace App\Http\Requests\Ekulap;
 
 use App\Enums\RecordStatus;
-use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\RbacCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -36,7 +36,11 @@ class StoreUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:32', Rule::unique('users', 'phone')->ignore($userId)],
             'email' => ['nullable', 'email', 'max:150', Rule::unique('users', 'email')->ignore($userId)],
             'password' => [$userId ? 'nullable' : 'required', 'string', 'min:6'],
-            'role' => ['required', Rule::in(UserRole::values())],
+            'role' => [
+                'required',
+                'string',
+                Rule::exists('roles', 'name')->where('guard_name', RbacCatalog::GUARD),
+            ],
             'division_id' => ['nullable', 'integer', 'exists:divisions,id'],
             'status' => ['required', Rule::in(RecordStatus::values())],
         ];

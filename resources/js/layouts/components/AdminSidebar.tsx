@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { BrandLogo } from '@/components/ekulap/BrandLogo';
 import {
     buildSidebarNavItems,
+    resolveHomeHref,
     type NavItem,
 } from '@/layouts/components/sidebarNavConfig';
 import {
@@ -15,6 +16,7 @@ type AdminSidebarProps = {
     mobileOpen: boolean;
     pendingTphLots: number;
     userRole: string;
+    permissions: string[];
     isAuthenticated: boolean;
     isDevelopment?: boolean;
     onCloseMobile: () => void;
@@ -85,15 +87,15 @@ export function AdminSidebar({
     mobileOpen,
     pendingTphLots,
     userRole,
+    permissions,
     isAuthenticated,
     isDevelopment = false,
     onCloseMobile,
     onToggleCollapse,
 }: AdminSidebarProps) {
     const theme = getSidebarTheme(isDevelopment);
-    const navItems = buildSidebarNavItems(userRole, pendingTphLots);
-    const homeHref =
-        userRole === 'Kerani Produksi' ? '/tph-harvest' : '/dashboard';
+    const navItems = buildSidebarNavItems(permissions, pendingTphLots);
+    const homeHref = resolveHomeHref(permissions);
     const isCollapsed = collapsed && !mobileOpen;
 
     return (

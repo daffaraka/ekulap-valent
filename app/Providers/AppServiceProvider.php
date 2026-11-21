@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Enums\UserRole;
 use App\Models\User;
 use App\Services\AuditLoggerService;
 use Carbon\CarbonImmutable;
@@ -13,6 +12,7 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -34,7 +34,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureProxyScheme();
+        $this->configureRbacGate();
         $this->configureAuditAuthListeners();
+    }
+
+    protected function configureRbacGate(): void
+    {
+        Gate::before(function (User $user, string $ability): ?bool {
+            return $user->isAdmin() ? true : null;
+        });
     }
 
     protected function configureAuditAuthListeners(): void
@@ -45,8 +53,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $user = $event->user;
-            $roleAttr = $user->getAttribute('role');
-            $roleLabel = $roleAttr instanceof UserRole ? $roleAttr->value : 'Pengguna';
+            $roleLabel = $user->roleLabel();
             $nik = $user->username ?? $user->email;
 
             app(AuditLoggerService::class)->log(
@@ -94,8 +101,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $user = $event->user;
-            $roleAttr = $user->getAttribute('role');
-            $roleLabel = $roleAttr instanceof UserRole ? $roleAttr->value : 'Pengguna';
+            $roleLabel = $user->roleLabel();
 
             app(AuditLoggerService::class)->log(
                 category: 'auth',

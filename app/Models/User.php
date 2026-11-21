@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
+use App\Services\RbacCatalog;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -26,7 +28,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
- * @property UserRole $role
+ * @property string $role
  * @property int|null $division_id
  * @property RecordStatus $status
  * @property string|null $two_factor_secret
@@ -41,7 +43,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected string $guard_name = RbacCatalog::GUARD;
 
     /**
      * Get the attributes that should be cast.
@@ -54,7 +58,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
-            'role' => UserRole::class,
+            'role' => 'string',
             'status' => RecordStatus::class,
         ];
     }
@@ -88,8 +92,32 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->status === RecordStatus::Aktif;
     }
 
-    public function hasRole(UserRole ...$roles): bool
+    public function roleLabel(): string
     {
-        return in_array($this->role, $roles, true);
+        return trim($this->role) !== '' ? $this->role : 'Pengguna';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin->value
+            || $this->hasRole(UserRole::Admin->value);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function resolvedPermissionNames(): array
+    {
+        if ($this->isAdmin()) {
+            return app(RbacCatalog::class)->allPermissionNames();
+        }
+
+        return array_values(
+            $this->getAllPermissions()
+                ->pluck('name')
+                ->filter(static fn (mixed $name): bool => is_string($name) && $name !== '')
+                ->unique()
+                ->all(),
+        );
     }
 }

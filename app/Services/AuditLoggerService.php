@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -33,11 +32,8 @@ class AuditLoggerService
                 ? $resolvedActor->username
                 : $fallbackUsername;
 
-            $actorRoleAttr = $resolvedActor instanceof User
-                ? $resolvedActor->getAttribute('role')
-                : null;
-            $actorRole = $actorRoleAttr instanceof UserRole
-                ? $actorRoleAttr->value
+            $actorRole = $resolvedActor instanceof User
+                ? $resolvedActor->roleLabel()
                 : null;
 
             $ipAddress = $request instanceof Request ? $request->ip() : null;

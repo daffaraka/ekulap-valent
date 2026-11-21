@@ -28,7 +28,7 @@ class EnsureUserRole
             ]);
         }
 
-        if ($roles !== [] && ! in_array($user->role->value, $roles, true)) {
+        if ($roles !== [] && ! $user->hasAnyRole($roles) && ! in_array($user->role, $roles, true)) {
             abort(403, 'Jabatan Anda tidak memiliki izin untuk mengakses fitur ini.');
         }
 

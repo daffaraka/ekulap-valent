@@ -13,6 +13,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(RolePermissionSeeder::class);
+
         $divIv = Division::query()->updateOrCreate(
             ['code' => 'DIV-IV'],
             ['name' => 'Divisi IV Jalemo Estate']
@@ -92,7 +94,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $account) {
-            User::query()->updateOrCreate(
+            $user = User::query()->updateOrCreate(
                 ['email' => $account['email']],
                 [
                     'username' => $account['username'],
@@ -100,11 +102,13 @@ class UserSeeder extends Seeder
                     'phone' => $account['phone'],
                     'email_verified_at' => now(),
                     'password' => $password,
-                    'role' => $account['role'],
+                    'role' => $account['role']->value,
                     'division_id' => $account['division_id'],
                     'status' => $account['status'],
                 ]
             );
+
+            $user->syncRoles([$account['role']->value]);
         }
     }
 }

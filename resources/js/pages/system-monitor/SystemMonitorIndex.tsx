@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { AuditActivityTable } from '@/pages/system-monitor/components/AuditActivityTable';
 import { SystemErrorTranslatorList } from '@/pages/system-monitor/components/SystemErrorTranslatorList';
@@ -28,6 +29,8 @@ export default function SystemMonitorIndex({
     filters: initialFilters,
     categoryOptions,
 }: SystemMonitorIndexProps) {
+    const { can } = usePermissions();
+    const canExport = can('system-monitor.export');
     const [filters, setFilters] = useState<MonitorFilters>(initialFilters);
 
     const updateFilter = (key: keyof MonitorFilters, value: string): void => {
@@ -136,7 +139,7 @@ export default function SystemMonitorIndex({
                         onUpdateFilter={updateFilter}
                         onApply={handleApply}
                         onReset={handleReset}
-                        exportHref={exportHref}
+                        exportHref={canExport ? exportHref : undefined}
                     />
                 )}
             </div>

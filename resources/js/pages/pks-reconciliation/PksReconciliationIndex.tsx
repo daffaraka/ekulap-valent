@@ -1,10 +1,11 @@
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { PksReconciliationTable } from '@/pages/pks-reconciliation/components/PksReconciliationTable';
 import { PksWeighModal } from '@/pages/pks-reconciliation/components/PksWeighModal';
 import { formatKg, formatNumber } from '@/services/formatters';
-import type { DeliveryOrder, PaginatedData, User } from '@/types';
+import type { DeliveryOrder, PaginatedData } from '@/types';
 
 type PksReconciliationIndexProps = {
     orders: PaginatedData<DeliveryOrder>;
@@ -26,12 +27,9 @@ export default function PksReconciliationIndex({
     summary,
     deliveryStatuses,
 }: PksReconciliationIndexProps) {
-    const page = usePage<{ auth: { user: User } }>();
-    const role = page.props.auth.user.role;
-    const canWeigh =
-        role === 'Admin' ||
-        role === 'Checker PKS' ||
-        role === 'Supervisi/Asisten';
+    const { can } = usePermissions();
+    const canWeigh = can('pks-reconciliation.weigh');
+    const canExport = can('pks-reconciliation.export');
 
     const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(
         null,
@@ -103,12 +101,14 @@ export default function PksReconciliationIndex({
                         ))}
                     </select>
 
-                    <a
-                        href="/pks-reconciliation/export"
-                        className="inline-flex min-h-11 items-center rounded-md border border-[#1C5143] bg-[#E9EEE9] px-4 text-xs font-bold text-[#102B26] transition hover:bg-[#dfe6df]"
-                    >
-                        Ekspor Laporan CSV (Siap Excel)
-                    </a>
+                    {canExport && (
+                        <a
+                            href="/pks-reconciliation/export"
+                            className="inline-flex min-h-11 items-center rounded-md border border-[#1C5143] bg-[#E9EEE9] px-4 text-xs font-bold text-[#102B26] transition hover:bg-[#dfe6df]"
+                        >
+                            Ekspor Laporan CSV (Siap Excel)
+                        </a>
+                    )}
                 </div>
 
                 <PksReconciliationTable

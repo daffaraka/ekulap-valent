@@ -1,5 +1,6 @@
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { SuratJalanBuilderModal } from '@/pages/surat-jalan/components/SuratJalanBuilderModal';
 import { SuratJalanTable } from '@/pages/surat-jalan/components/SuratJalanTable';
@@ -10,7 +11,6 @@ import type {
     PaginatedData,
     PksMill,
     Truck,
-    User,
 } from '@/types';
 
 type SuratJalanIndexProps = {
@@ -32,13 +32,9 @@ export default function SuratJalanIndex({
     pksMills,
     deliveryStatuses,
 }: SuratJalanIndexProps) {
-    const page = usePage<{ auth: { user: User } }>();
-    const role = page.props.auth.user.role;
-    const canCreate =
-        role === 'Admin' ||
-        role === 'Kerani Produksi' ||
-        role === 'Supervisi/Asisten';
-    const canDispatch = canCreate || role === 'Supir';
+    const { can } = usePermissions();
+    const canCreate = can('surat-jalan.create');
+    const canDispatch = can('surat-jalan.dispatch');
 
     const [search, setSearch] = useState<string>(filters.search);
     const [status, setStatus] = useState<string>(filters.status);
@@ -106,7 +102,7 @@ export default function SuratJalanIndex({
                             className="min-h-11 rounded-md bg-[#1C5143] px-4 text-xs font-bold text-white transition hover:bg-[#102B26]"
                         >
                             + Buat SPB &amp; Muat Truk ({availableLots.length}{' '}
-                            Lot Sisa)
+                            Stasiun Sisa)
                         </button>
                     )}
                 </div>

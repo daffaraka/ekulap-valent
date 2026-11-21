@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import {
     IconAiSpark,
+    IconDailyRecap,
     IconDashboard,
     IconHarvestScale,
     IconMillWeigh,
@@ -9,17 +11,61 @@ import {
 
 type MobileBottomNavProps = {
     currentUrl: string;
-    userRole: string;
+    permissions: string[];
     isDevelopment?: boolean;
 };
 
+type MobileTab = {
+    permission: string;
+    label: string;
+    href: string;
+    icon: ReactNode;
+};
+
+const ALL_MOBILE_TABS: MobileTab[] = [
+    {
+        permission: 'dashboard.view',
+        label: 'Beranda',
+        href: '/dashboard',
+        icon: <IconDashboard className="size-5" />,
+    },
+    {
+        permission: 'tph-harvest.view',
+        label: 'TPH',
+        href: '/tph-harvest',
+        icon: <IconHarvestScale className="size-5" />,
+    },
+    {
+        permission: 'surat-jalan.view',
+        label: 'SPB',
+        href: '/surat-jalan',
+        icon: <IconTruckRoute className="size-5" />,
+    },
+    {
+        permission: 'pks-reconciliation.view',
+        label: 'Kutip Lapis',
+        href: '/pks-reconciliation',
+        icon: <IconMillWeigh className="size-5" />,
+    },
+    {
+        permission: 'ai-assistant.use',
+        label: 'AI',
+        href: '/ai-assistant',
+        icon: <IconAiSpark className="size-5" />,
+    },
+    {
+        permission: 'rekapan.view',
+        label: 'Rekapan',
+        href: '/rekapan-kutip-lapis',
+        icon: <IconDailyRecap className="size-5" />,
+    },
+];
+
 export function MobileBottomNav({
     currentUrl,
-    userRole,
+    permissions,
     isDevelopment = false,
 }: MobileBottomNavProps) {
-    const isKerani = userRole === 'Kerani Produksi';
-
     const navTheme = isDevelopment
         ? {
               bar: 'border-[#4A3408] bg-[#5D420B] text-[#EDE4D3]/85',
@@ -32,51 +78,13 @@ export function MobileBottomNav({
               idle: 'text-[#98A4A0] hover:text-[#F6F8F6]',
           };
 
-    const tabs = isKerani
-        ? [
-              {
-                  label: 'TPH',
-                  href: '/tph-harvest',
-                  icon: <IconHarvestScale className="size-5" />,
-              },
-              {
-                  label: 'SPB',
-                  href: '/surat-jalan',
-                  icon: <IconTruckRoute className="size-5" />,
-              },
-              {
-                  label: 'Kutip Lapis',
-                  href: '/pks-reconciliation',
-                  icon: <IconMillWeigh className="size-5" />,
-              },
-          ]
-        : [
-              {
-                  label: 'Beranda',
-                  href: '/dashboard',
-                  icon: <IconDashboard className="size-5" />,
-              },
-              {
-                  label: 'TPH',
-                  href: '/tph-harvest',
-                  icon: <IconHarvestScale className="size-5" />,
-              },
-              {
-                  label: 'SPB',
-                  href: '/surat-jalan',
-                  icon: <IconTruckRoute className="size-5" />,
-              },
-              {
-                  label: 'Kutip Lapis',
-                  href: '/pks-reconciliation',
-                  icon: <IconMillWeigh className="size-5" />,
-              },
-              {
-                  label: 'AI',
-                  href: '/ai-assistant',
-                  icon: <IconAiSpark className="size-5" />,
-              },
-          ];
+    const tabs = ALL_MOBILE_TABS.filter((tab) =>
+        permissions.includes(tab.permission),
+    ).slice(0, 5);
+
+    if (tabs.length === 0) {
+        return null;
+    }
 
     return (
         <nav

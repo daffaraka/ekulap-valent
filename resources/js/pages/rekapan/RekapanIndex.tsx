@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import AdminLayout from '@/layouts/AdminLayout';
 import { RekapanDailyTable } from '@/pages/rekapan/components/RekapanDailyTable';
 import { RekapanDetailModal } from '@/pages/rekapan/components/RekapanDetailModal';
@@ -30,6 +31,8 @@ export default function RekapanIndex({
     filters,
     divisions,
 }: RekapanIndexProps) {
+    const { can } = usePermissions();
+    const canExport = can('rekapan.export');
     const [activeTab, setActiveTab] = useState(filters.tab || 'daily');
     const [dateFrom, setDateFrom] = useState(filters.date_from);
     const [dateTo, setDateTo] = useState(filters.date_to);
@@ -144,7 +147,12 @@ export default function RekapanIndex({
                     dateTo={dateTo}
                     divisionId={divisionId}
                     divisions={divisions}
-                    exportHref={exportHref}
+                    exportHref={canExport ? exportHref : undefined}
+                    exportLabel={
+                        activeTab === 'station'
+                            ? 'Ekspor CSV Stasiun'
+                            : 'Ekspor CSV Harian'
+                    }
                     onChangeDateFrom={setDateFrom}
                     onChangeDateTo={setDateTo}
                     onChangeDivisionId={setDivisionId}
