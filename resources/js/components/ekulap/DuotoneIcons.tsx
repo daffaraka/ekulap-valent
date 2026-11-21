@@ -336,3 +336,49 @@ export function IconShieldMonitor({
         </svg>
     );
 }
+
+export function IconRoleKey({ className = 'size-5', ...props }: IconProps) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} {...props}>
+            <circle
+                cx="8.5"
+                cy="12"
+                r="4.5"
+                fill="currentColor"
+                fillOpacity="0.2"
+                stroke="currentColor"
+                strokeWidth="1.6"
+            />
+            <circle cx="8.5" cy="12" r="1.4" fill="currentColor" />
+            <path
+                d="M13 12H20.5M17.5 12V15M20 12V14.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
+export function IconCamera({ className = 'size-5', ...props }: IconProps) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} {...props}>
+            <path
+                d="M4 8.5C4 7.4 4.9 6.5 6 6.5H8.2L9.6 4.5H14.4L15.8 6.5H18C19.1 6.5 20 7.4 20 8.5V17.5C20 18.6 19.1 19.5 18 19.5H6C4.9 19.5 4 18.6 4 17.5V8.5Z"
+                fill="currentColor"
+                fillOpacity="0.2"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+            <circle
+                cx="12"
+                cy="13"
+                r="3.2"
+                stroke="currentColor"
+                strokeWidth="1.6"
+            />
+        </svg>
+    );
+}

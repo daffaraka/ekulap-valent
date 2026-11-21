@@ -1,5 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { PhotoCaptureField } from '@/components/ekulap/PhotoCaptureField';
 import InputError from '@/components/input-error';
 import { formatKg } from '@/services/formatters';
 import type { DeliveryOrder } from '@/types';
@@ -48,7 +49,7 @@ export function PksWeighModal({ order, onClose }: PksWeighModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#102B26]/65 p-4">
-            <div className="w-full max-w-lg rounded-lg border border-[#CFD9CF] bg-white p-5 shadow-xl sm:p-6">
+            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-xl border border-[#CFD9CF] bg-white p-5 shadow-xl sm:p-6">
                 <div className="flex items-center justify-between border-b border-[#E9EEE9] pb-3">
                     <div>
                         <h2 className="text-base font-bold text-[#102B26]">
@@ -125,23 +126,19 @@ export function PksWeighModal({ order, onClose }: PksWeighModalProps) {
                         </span>
                     </div>
 
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold">
-                            Foto Struk Timbangan PKS (Opsional)
-                        </label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) =>
-                                setData(
-                                    'pks_slip_photo',
-                                    e.target.files?.[0] ?? null,
-                                )
-                            }
-                            className="w-full rounded-md border border-[#C8D4C8] p-2 text-xs"
-                        />
-                        <InputError message={errors.pks_slip_photo} />
-                    </div>
+                    <PhotoCaptureField
+                        label="Foto Struk Timbangan PKS (Opsional)"
+                        photos={
+                            data.pks_slip_photo ? [data.pks_slip_photo] : []
+                        }
+                        minCount={0}
+                        maxCount={1}
+                        error={errors.pks_slip_photo}
+                        fileNamePrefix="slip-pks"
+                        onChange={(files) =>
+                            setData('pks_slip_photo', files[0] ?? null)
+                        }
+                    />
 
                     <div className="flex justify-end gap-2 border-t border-[#E9EEE9] pt-4">
                         <button
